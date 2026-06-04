@@ -1,0 +1,1162 @@
+// ============================================================
+// PVC DISTRIBUTOR ADMIN SYSTEM — Full DB Schema
+// Compatible with dbdiagram.io
+// ============================================================
+
+// ============================================================
+// SECTION 1: RBAC — Authentication & Authorization
+// ============================================================
+
+Table auth_users {
+  id int [pk, increment]
+  name varchar(100) [not null]
+  email varchar(150) [not null, unique]
+  phone varchar(20)
+  password_hash varchar(255) [not null]
+  is_active tinyint [not null, default: 1]
+  last_login_at timestamp
+  avatar_url varchar(500)
+  status varchar(20) [not null, default: 'ACTIVE']
+  ip_address varchar(100)
+  mac_address varchar(100)
+  created_by int
+  created_at timestamp [not null, default: `now()`]
+  updated_by int
+  updated_at timestamp
+  deleted_at timestamp
+}
+
+Table auth_roles {
+  id int [pk, increment]
+  name varchar(80) [not null, unique]
+  slug varchar(80) [not null, unique]
+  description text
+  is_system tinyint [not null, default: 0]
+  status varchar(20) [not null, default: 'ACTIVE']
+  ip_address varchar(100)
+  mac_address varchar(100)
+  created_by int
+  created_at timestamp [not null, default: `now()`]
+  updated_by int
+  updated_at timestamp
+
+  note: 'Seed: Admin, Sales Staff, Warehouse Staff, Accountant, Viewer'
+}
+
+Table auth_modules {
+  id int [pk, increment]
+  code varchar(60) [not null, unique]
+  label varchar(100) [not null]
+  description text
+  sort_order int [not null, default: 0]
+  status varchar(20) [not null, default: 'ACTIVE']
+  created_at timestamp [not null, default: `now()`]
+  updated_at timestamp
+
+  note: 'e.g. code=inventory, label=Inventory Management'
+}
+
+Table auth_module_actions {
+  id int [pk, increment]
+  module_id int [not null]
+  action varchar(60) [not null]
+  label varchar(100) [not null]
+  description text
+  status varchar(20) [not null, default: 'ACTIVE']
+  created_at timestamp [not null, default: `now()`]
+  updated_at timestamp
+
+  indexes {
+    (module_id, action) [unique, name: 'uq_module_action']
+    module_id [name: 'idx_module_actions_module_id']
+  }
+
+  note: 'action values: view, create, edit, delete, approve, export'
+}
+
+Table auth_permissions {
+  id int [pk, increment]
+  resource varchar(100)
+  action varchar(60)
+  status varchar(20) [not null, default: 'ACTIVE']
+  ip_address varchar(100)
+  mac_address varchar(100)
+  created_by int
+  created_at timestamp [not null, default: `now()`]
+  updated_by int
+  updated_at timestamp
+}
+
+Table auth_roles_permissions_mapping {
+  id int [pk, increment]
+  role_id int [not null]
+  permission_id int [not null]
+  module_action_id int [not null]
+  granted_by int
+  ip_address varchar(100)
+  mac_address varchar(100)
+  created_by int
+  created_at timestamp [not null, default: `now()`]
+  updated_by int
+  updated_at timestamp
+
+  indexes {
+    (role_id, permission_id) [unique, name: 'uq_auth_roles_permissions_mapping']
+    permission_id [name: 'idx_auth_roles_permissions_mapping_permission_id']
+    role_id [name: 'idx_auth_roles_permissions_mapping_role_id']
+    module_action_id [name: 'idx_auth_roles_permissions_mapping_module_action_id']
+  }
+}
+
+Table auth_user_roles {
+  id int [pk, increment]
+  user_id int [not null]
+  role_id int [not null]
+  assigned_by int
+  expires_at timestamp
+  ip_address varchar(100)
+  mac_address varchar(100)
+  created_by int
+  created_at timestamp [not null, default: `now()`]
+  updated_by int
+  updated_at timestamp
+
+  indexes {
+    (user_id, role_id) [unique, name: 'uq_user_role']
+    user_id [name: 'idx_user_roles_user_id']
+    role_id [name: 'idx_user_roles_role_id']
+  }
+}
+
+// ============================================================
+// SECTION 2: Product & Inventory
+// ============================================================
+
+Table categories {
+  id int [pk, increment]
+  name varchar(100) [not null, unique]
+  description text
+  status varchar(20) [not null, default: 'ACTIVE']
+  ip_address varchar(100)
+  mac_address varchar(100)
+  created_by int
+  created_at timestamp [not null, default: `now()`]
+  updated_by int
+  updated_at timestamp
+
+  note: 'e.g. Sheet, Pipe, Accessories'
+}
+
+Table products {
+  id int [pk, increment]
+  name varchar(150) [not null]
+  category_id int [not null]
+  default_supplier_id int
+  unit varchar(20) [not null, default: 'piece']
+  hsn_code varchar(20)
+  gst_rate decimal(5,2) [not null, default: 0.00]
+  low_stock_threshold decimal(10,3) [not null, default: 10.000]
+  is_active tinyint [not null, default: 1]
+  description text
+  status varchar(20) [not null, default: 'ACTIVE']
+  ip_address varchar(100)
+  mac_address varchar(100)
+  created_by int
+  created_at timestamp [not null, default: `now()`]
+  updated_by int
+  updated_at timestamp
+  deleted_at timestamp
+
+  indexes {
+    category_id [name: 'idx_products_category_id']
+    default_supplier_id [name: 'idx_products_supplier_id']
+  }
+
+  note: 'unit: piece | sheet | meter | kg | bundle'
+}
+
+Table product_dimensions {
+  id int [pk, increment]
+  product_id int [not null]
+  sku varchar(50) [not null, unique]
+  dimension_label varchar(80) [not null]
+  width_mm decimal(8,2)
+  height_mm decimal(8,2)
+  thickness_mm decimal(8,2)
+  purchase_price decimal(15,2) [not null, default: 0.00]
+  selling_price decimal(15,2) [not null, default: 0.00]
+  is_active tinyint [not null, default: 1]
+  status varchar(20) [not null, default: 'ACTIVE']
+  ip_address varchar(100)
+  mac_address varchar(100)
+  created_by int
+  created_at timestamp [not null, default: `now()`]
+  updated_by int
+  updated_at timestamp
+
+  indexes {
+    product_id [name: 'idx_product_dimensions_product_id']
+    sku [name: 'idx_product_dimensions_sku']
+  }
+
+  note: 'Each unique dimension = one SKU. e.g. PVC Sheet 22x78 = SKU 119'
+}
+
+Table stock_ledger {
+  id int [pk, increment]
+  product_dimension_id int [not null]
+  batch_lot_id int
+  qty_change decimal(10,3) [not null]
+  qty_after decimal(10,3) [not null]
+  txn_type varchar(40) [not null]
+  ref_type varchar(40)
+  ref_id int
+  notes text
+  ip_address varchar(100)
+  mac_address varchar(100)
+  created_by int [not null]
+  created_at timestamp [not null, default: `now()`]
+
+  indexes {
+    product_dimension_id [name: 'idx_stock_ledger_product_dimension_id']
+    batch_lot_id [name: 'idx_stock_ledger_batch_lot_id']
+    txn_type [name: 'idx_stock_ledger_txn_type']
+    created_at [name: 'idx_stock_ledger_created_at']
+  }
+
+  note: 'txn_type: opening | purchase_receipt | sale_dispatch | sale_return | damage | wastage | adjustment | reservation | reservation_release. APPEND-ONLY — never update or delete rows.'
+}
+
+Table batch_lots {
+  id int [pk, increment]
+  lot_number varchar(80) [not null, unique]
+  supplier_id int [not null]
+  purchase_order_id int
+  received_date date [not null]
+  notes text
+  status varchar(20) [not null, default: 'ACTIVE']
+  ip_address varchar(100)
+  mac_address varchar(100)
+  created_by int [not null]
+  created_at timestamp [not null, default: `now()`]
+  updated_by int
+  updated_at timestamp
+
+  indexes {
+    supplier_id [name: 'idx_batch_lots_supplier_id']
+    purchase_order_id [name: 'idx_batch_lots_purchase_order_id']
+  }
+}
+
+Table restock_cart {
+  id int [pk, increment]
+  name varchar(150) [not null, default: 'Restock Draft']
+  status varchar(20) [not null, default: 'draft']
+  notes text
+  converted_po_id int
+  ip_address varchar(100)
+  mac_address varchar(100)
+  created_by int [not null]
+  created_at timestamp [not null, default: `now()`]
+  updated_by int
+  updated_at timestamp
+
+  note: 'status: draft | converted'
+}
+
+Table restock_cart_items {
+  id int [pk, increment]
+  restock_cart_id int [not null]
+  product_dimension_id int [not null]
+  current_stock decimal(10,3) [not null]
+  suggested_qty decimal(10,3) [not null]
+  override_qty decimal(10,3)
+  added_reason varchar(30) [not null, default: 'manual']
+  created_at timestamp [not null, default: `now()`]
+  updated_at timestamp
+
+  indexes {
+    restock_cart_id [name: 'idx_restock_cart_items_cart_id']
+    product_dimension_id [name: 'idx_restock_cart_items_product_dimension_id']
+  }
+
+  note: 'added_reason: below_threshold | high_velocity | manual'
+}
+
+// ============================================================
+// SECTION 3: Supplier Management
+// ============================================================
+
+Table suppliers {
+  id int [pk, increment]
+  name varchar(150) [not null]
+  contact_person varchar(100)
+  phone varchar(20)
+  email varchar(150)
+  address text
+  city varchar(100)
+  state varchar(100)
+  pincode varchar(10)
+  gst_number varchar(20)
+  payment_terms varchar(100)
+  credit_days int [not null, default: 0]
+  rating tinyint
+  performance_notes text
+  is_active tinyint [not null, default: 1]
+  status varchar(20) [not null, default: 'ACTIVE']
+  ip_address varchar(100)
+  mac_address varchar(100)
+  created_by int
+  created_at timestamp [not null, default: `now()`]
+  updated_by int
+  updated_at timestamp
+  deleted_at timestamp
+
+  note: 'rating: 1-5 performance score'
+}
+
+Table supplier_products {
+  id int [pk, increment]
+  supplier_id int [not null]
+  product_dimension_id int [not null]
+  supplier_sku_code varchar(80)
+  last_purchase_price decimal(15,2)
+  lead_time_days int
+  is_preferred tinyint [not null, default: 0]
+  status varchar(20) [not null, default: 'ACTIVE']
+  ip_address varchar(100)
+  mac_address varchar(100)
+  created_by int
+  created_at timestamp [not null, default: `now()`]
+  updated_by int
+  updated_at timestamp
+
+  indexes {
+    (supplier_id, product_dimension_id) [unique, name: 'uq_supplier_product']
+    supplier_id [name: 'idx_supplier_products_supplier_id']
+    product_dimension_id [name: 'idx_supplier_products_product_dimension_id']
+  }
+}
+
+Table supplier_price_history {
+  id int [pk, increment]
+  supplier_id int [not null]
+  product_dimension_id int [not null]
+  price decimal(15,2) [not null]
+  effective_date date [not null]
+  notes text
+  ip_address varchar(100)
+  mac_address varchar(100)
+  recorded_by int [not null]
+  created_at timestamp [not null, default: `now()`]
+
+  indexes {
+    supplier_id [name: 'idx_supplier_price_history_supplier_id']
+    product_dimension_id [name: 'idx_supplier_price_history_product_dimension_id']
+    effective_date [name: 'idx_supplier_price_history_effective_date']
+  }
+
+  note: 'APPEND-ONLY — never update or delete rows.'
+}
+
+Table purchase_orders {
+  id int [pk, increment]
+  po_number varchar(40) [not null, unique]
+  supplier_id int [not null]
+  status varchar(30) [not null, default: 'draft']
+  order_date date [not null]
+  expected_delivery date
+  actual_delivery date
+  notes text
+  total_amount decimal(15,2) [not null, default: 0.00]
+  source varchar(20) [not null, default: 'manual']
+  restock_cart_id int
+  approved_by int
+  status_label varchar(20) [not null, default: 'ACTIVE']
+  ip_address varchar(100)
+  mac_address varchar(100)
+  created_by int [not null]
+  created_at timestamp [not null, default: `now()`]
+  updated_by int
+  updated_at timestamp
+
+  indexes {
+    supplier_id [name: 'idx_purchase_orders_supplier_id']
+    status [name: 'idx_purchase_orders_status']
+    order_date [name: 'idx_purchase_orders_order_date']
+  }
+
+  note: 'status: draft | sent | confirmed | partially_received | received | cancelled'
+}
+
+Table purchase_order_items {
+  id int [pk, increment]
+  purchase_order_id int [not null]
+  product_dimension_id int [not null]
+  ordered_qty decimal(10,3) [not null]
+  received_qty decimal(10,3) [not null, default: 0.000]
+  unit_price decimal(15,2) [not null]
+  gst_rate decimal(5,2) [not null, default: 0.00]
+  line_total decimal(15,2) [not null]
+  created_at timestamp [not null, default: `now()`]
+  updated_at timestamp
+
+  indexes {
+    purchase_order_id [name: 'idx_po_items_purchase_order_id']
+    product_dimension_id [name: 'idx_po_items_product_dimension_id']
+  }
+}
+
+Table goods_receipts {
+  id int [pk, increment]
+  purchase_order_id int [not null]
+  batch_lot_id int
+  received_date date [not null]
+  notes text
+  status varchar(20) [not null, default: 'ACTIVE']
+  ip_address varchar(100)
+  mac_address varchar(100)
+  received_by int [not null]
+  created_at timestamp [not null, default: `now()`]
+  updated_at timestamp
+
+  indexes {
+    purchase_order_id [name: 'idx_goods_receipts_purchase_order_id']
+    batch_lot_id [name: 'idx_goods_receipts_batch_lot_id']
+  }
+}
+
+Table goods_receipt_items {
+  id int [pk, increment]
+  goods_receipt_id int [not null]
+  purchase_order_item_id int [not null]
+  received_qty decimal(10,3) [not null]
+  damaged_qty decimal(10,3) [not null, default: 0.000]
+  accepted_qty decimal(10,3) [not null]
+  created_at timestamp [not null, default: `now()`]
+  updated_at timestamp
+
+  indexes {
+    goods_receipt_id [name: 'idx_goods_receipt_items_receipt_id']
+    purchase_order_item_id [name: 'idx_goods_receipt_items_po_item_id']
+  }
+}
+
+// ============================================================
+// SECTION 4: Customer Management
+// ============================================================
+
+Table customers {
+  id int [pk, increment]
+  business_name varchar(150) [not null]
+  contact_person varchar(100)
+  phone varchar(20)
+  email varchar(150)
+  gst_number varchar(20)
+  customer_type varchar(20) [not null, default: 'retail']
+  credit_limit decimal(15,2) [not null, default: 0.00]
+  credit_days int [not null, default: 0]
+  price_list_id int
+  is_on_hold tinyint [not null, default: 0]
+  hold_reason text
+  notes text
+  status varchar(20) [not null, default: 'ACTIVE']
+  ip_address varchar(100)
+  mac_address varchar(100)
+  created_by int
+  created_at timestamp [not null, default: `now()`]
+  updated_by int
+  updated_at timestamp
+  deleted_at timestamp
+
+  indexes {
+    price_list_id [name: 'idx_customers_price_list_id']
+    customer_type [name: 'idx_customers_customer_type']
+  }
+
+  note: 'customer_type: retail | wholesale_a | wholesale_b | custom'
+}
+
+Table customer_addresses {
+  id int [pk, increment]
+  customer_id int [not null]
+  label varchar(80)
+  address_line text [not null]
+  city varchar(100) [not null]
+  state varchar(100)
+  pincode varchar(10)
+  is_default tinyint [not null, default: 0]
+  is_active tinyint [not null, default: 1]
+  status varchar(20) [not null, default: 'ACTIVE']
+  ip_address varchar(100)
+  mac_address varchar(100)
+  created_by int
+  created_at timestamp [not null, default: `now()`]
+  updated_by int
+  updated_at timestamp
+
+  indexes {
+    customer_id [name: 'idx_customer_addresses_customer_id']
+  }
+}
+
+Table price_lists {
+  id int [pk, increment]
+  name varchar(100) [not null, unique]
+  description text
+  is_active tinyint [not null, default: 1]
+  status varchar(20) [not null, default: 'ACTIVE']
+  ip_address varchar(100)
+  mac_address varchar(100)
+  created_by int
+  created_at timestamp [not null, default: `now()`]
+  updated_by int
+  updated_at timestamp
+
+  note: 'e.g. Wholesale A, Retail Standard, VIP'
+}
+
+Table price_list_items {
+  id int [pk, increment]
+  price_list_id int [not null]
+  product_dimension_id int [not null]
+  selling_price decimal(15,2) [not null]
+  min_qty decimal(10,3) [not null, default: 0.000]
+  valid_from date
+  valid_until date
+  created_at timestamp [not null, default: `now()`]
+  updated_at timestamp
+
+  indexes {
+    (price_list_id, product_dimension_id) [unique, name: 'uq_price_list_item']
+    price_list_id [name: 'idx_price_list_items_price_list_id']
+    product_dimension_id [name: 'idx_price_list_items_product_dimension_id']
+  }
+}
+
+// ============================================================
+// SECTION 5: Sales Orders & Quotations
+// ============================================================
+
+Table quotations {
+  id int [pk, increment]
+  quotation_number varchar(40) [not null, unique]
+  customer_id int [not null]
+  status varchar(20) [not null, default: 'draft']
+  valid_until date
+  notes text
+  subtotal decimal(15,2) [not null, default: 0.00]
+  tax_amount decimal(15,2) [not null, default: 0.00]
+  total_amount decimal(15,2) [not null, default: 0.00]
+  converted_order_id int
+  ip_address varchar(100)
+  mac_address varchar(100)
+  created_by int [not null]
+  created_at timestamp [not null, default: `now()`]
+  updated_by int
+  updated_at timestamp
+
+  indexes {
+    customer_id [name: 'idx_quotations_customer_id']
+    status [name: 'idx_quotations_status']
+  }
+
+  note: 'status: draft | sent | approved | rejected | expired | converted'
+}
+
+Table quotation_items {
+  id int [pk, increment]
+  quotation_id int [not null]
+  product_dimension_id int [not null]
+  qty decimal(10,3) [not null]
+  locked_unit_price decimal(15,2) [not null]
+  gst_rate decimal(5,2) [not null, default: 0.00]
+  discount_pct decimal(5,2) [not null, default: 0.00]
+  line_total decimal(15,2) [not null]
+  created_at timestamp [not null, default: `now()`]
+  updated_at timestamp
+
+  indexes {
+    quotation_id [name: 'idx_quotation_items_quotation_id']
+    product_dimension_id [name: 'idx_quotation_items_product_dimension_id']
+  }
+}
+
+Table sales_orders {
+  id int [pk, increment]
+  order_number varchar(40) [not null, unique]
+  customer_id int [not null]
+  delivery_address_id int
+  quotation_id int
+  status varchar(30) [not null, default: 'draft']
+  order_date date [not null]
+  required_date date
+  delivery_type varchar(20) [not null, default: 'our_vehicle']
+  notes text
+  subtotal decimal(15,2) [not null, default: 0.00]
+  tax_amount decimal(15,2) [not null, default: 0.00]
+  transport_charge decimal(15,2) [not null, default: 0.00]
+  total_amount decimal(15,2) [not null, default: 0.00]
+  is_template tinyint [not null, default: 0]
+  template_name varchar(100)
+  approved_by int
+  ip_address varchar(100)
+  mac_address varchar(100)
+  created_by int [not null]
+  created_at timestamp [not null, default: `now()`]
+  updated_by int
+  updated_at timestamp
+
+  indexes {
+    customer_id [name: 'idx_sales_orders_customer_id']
+    status [name: 'idx_sales_orders_status']
+    order_date [name: 'idx_sales_orders_order_date']
+    quotation_id [name: 'idx_sales_orders_quotation_id']
+    delivery_address_id [name: 'idx_sales_orders_delivery_address_id']
+  }
+
+  note: 'status: draft | confirmed | processing | partially_dispatched | dispatched | delivered | cancelled. delivery_type: our_vehicle | customer_vehicle'
+}
+
+Table sales_order_items {
+  id int [pk, increment]
+  sales_order_id int [not null]
+  product_dimension_id int [not null]
+  ordered_qty decimal(10,3) [not null]
+  dispatched_qty decimal(10,3) [not null, default: 0.000]
+  unit_price decimal(15,2) [not null]
+  gst_rate decimal(5,2) [not null, default: 0.00]
+  discount_pct decimal(5,2) [not null, default: 0.00]
+  line_total decimal(15,2) [not null]
+  margin_pct decimal(5,2)
+  created_at timestamp [not null, default: `now()`]
+  updated_at timestamp
+
+  indexes {
+    sales_order_id [name: 'idx_sales_order_items_sales_order_id']
+    product_dimension_id [name: 'idx_sales_order_items_product_dimension_id']
+  }
+}
+
+Table order_amendments {
+  id int [pk, increment]
+  sales_order_id int [not null]
+  field_changed varchar(100) [not null]
+  old_value text
+  new_value text
+  reason text
+  ip_address varchar(100)
+  mac_address varchar(100)
+  amended_by int [not null]
+  amended_at timestamp [not null, default: `now()`]
+
+  indexes {
+    sales_order_id [name: 'idx_order_amendments_sales_order_id']
+    amended_by [name: 'idx_order_amendments_amended_by']
+  }
+
+  note: 'APPEND-ONLY — never update or delete rows.'
+}
+
+// ============================================================
+// SECTION 6: Delivery & Logistics
+// ============================================================
+
+Table vehicles {
+  id int [pk, increment]
+  vehicle_number varchar(20) [not null, unique]
+  vehicle_type varchar(20) [not null, default: 'tempo']
+  driver_name varchar(100) [not null]
+  driver_phone varchar(20)
+  capacity_kg decimal(10,2)
+  notes text
+  is_active tinyint [not null, default: 1]
+  status varchar(20) [not null, default: 'ACTIVE']
+  ip_address varchar(100)
+  mac_address varchar(100)
+  created_by int
+  created_at timestamp [not null, default: `now()`]
+  updated_by int
+  updated_at timestamp
+
+  note: 'vehicle_type: tempo | truck | pickup | other'
+}
+
+Table route_groups {
+  id int [pk, increment]
+  name varchar(100) [not null]
+  vehicle_id int
+  trip_date date [not null]
+  notes text
+  status varchar(20) [not null, default: 'ACTIVE']
+  ip_address varchar(100)
+  mac_address varchar(100)
+  created_by int [not null]
+  created_at timestamp [not null, default: `now()`]
+  updated_by int
+  updated_at timestamp
+
+  indexes {
+    vehicle_id [name: 'idx_route_groups_vehicle_id']
+    trip_date [name: 'idx_route_groups_trip_date']
+  }
+}
+
+Table deliveries {
+  id int [pk, increment]
+  delivery_number varchar(40) [not null, unique]
+  sales_order_id int [not null]
+  vehicle_id int
+  delivery_type varchar(20) [not null, default: 'our_vehicle']
+  status varchar(20) [not null, default: 'scheduled']
+  scheduled_date date
+  dispatched_at timestamp
+  delivered_at timestamp
+  transport_cost decimal(15,2) [not null, default: 0.00]
+  cost_to_customer tinyint [not null, default: 0]
+  route_group_id int
+  delivery_notes text
+  proof_url varchar(500)
+  driver_payment decimal(15,2) [not null, default: 0.00]
+  driver_paid_at date
+  ip_address varchar(100)
+  mac_address varchar(100)
+  created_by int [not null]
+  created_at timestamp [not null, default: `now()`]
+  updated_by int
+  updated_at timestamp
+
+  indexes {
+    sales_order_id [name: 'idx_deliveries_sales_order_id']
+    vehicle_id [name: 'idx_deliveries_vehicle_id']
+    status [name: 'idx_deliveries_status']
+    route_group_id [name: 'idx_deliveries_route_group_id']
+  }
+
+  note: 'status: scheduled | packed | dispatched | in_transit | delivered | failed'
+}
+
+Table delivery_items {
+  id int [pk, increment]
+  delivery_id int [not null]
+  sales_order_item_id int [not null]
+  product_dimension_id int [not null]
+  dispatched_qty decimal(10,3) [not null]
+  created_at timestamp [not null, default: `now()`]
+
+  indexes {
+    delivery_id [name: 'idx_delivery_items_delivery_id']
+    sales_order_item_id [name: 'idx_delivery_items_sales_order_item_id']
+    product_dimension_id [name: 'idx_delivery_items_product_dimension_id']
+  }
+}
+
+Table delivery_returns {
+  id int [pk, increment]
+  delivery_id int [not null]
+  product_dimension_id int [not null]
+  returned_qty decimal(10,3) [not null]
+  reason text [not null]
+  condition varchar(20) [not null, default: 'unknown']
+  stock_action varchar(20) [not null, default: 'pending']
+  credit_note_id int
+  ip_address varchar(100)
+  mac_address varchar(100)
+  received_by int [not null]
+  created_at timestamp [not null, default: `now()`]
+  updated_at timestamp
+
+  indexes {
+    delivery_id [name: 'idx_delivery_returns_delivery_id']
+    product_dimension_id [name: 'idx_delivery_returns_product_dimension_id']
+    credit_note_id [name: 'idx_delivery_returns_credit_note_id']
+  }
+
+  note: 'condition: resellable | damaged | unknown. stock_action: return_to_stock | mark_damaged | pending'
+}
+
+// ============================================================
+// SECTION 7: Billing & Invoicing
+// ============================================================
+
+Table invoices {
+  id int [pk, increment]
+  invoice_number varchar(40) [not null, unique]
+  sales_order_id int [not null]
+  customer_id int [not null]
+  delivery_id int
+  invoice_date date [not null]
+  due_date date [not null]
+  status varchar(20) [not null, default: 'draft']
+  subtotal decimal(15,2) [not null, default: 0.00]
+  tax_amount decimal(15,2) [not null, default: 0.00]
+  transport_charge decimal(15,2) [not null, default: 0.00]
+  advance_amount decimal(15,2) [not null, default: 0.00]
+  tds_amount decimal(15,2) [not null, default: 0.00]
+  total_amount decimal(15,2) [not null, default: 0.00]
+  paid_amount decimal(15,2) [not null, default: 0.00]
+  balance_due decimal(15,2) [not null, default: 0.00]
+  irn_number varchar(100)
+  irn_generated_at timestamp
+  notes text
+  ip_address varchar(100)
+  mac_address varchar(100)
+  created_by int [not null]
+  created_at timestamp [not null, default: `now()`]
+  updated_by int
+  updated_at timestamp
+
+  indexes {
+    sales_order_id [name: 'idx_invoices_sales_order_id']
+    customer_id [name: 'idx_invoices_customer_id']
+    delivery_id [name: 'idx_invoices_delivery_id']
+    status [name: 'idx_invoices_status']
+    due_date [name: 'idx_invoices_due_date']
+  }
+
+  note: 'status: draft | issued | partially_paid | paid | overdue | cancelled'
+}
+
+Table invoice_items {
+  id int [pk, increment]
+  invoice_id int [not null]
+  sales_order_item_id int
+  product_dimension_id int [not null]
+  qty decimal(10,3) [not null]
+  unit_price decimal(15,2) [not null]
+  gst_rate decimal(5,2) [not null, default: 0.00]
+  cgst_amount decimal(15,2) [not null, default: 0.00]
+  sgst_amount decimal(15,2) [not null, default: 0.00]
+  igst_amount decimal(15,2) [not null, default: 0.00]
+  discount_pct decimal(5,2) [not null, default: 0.00]
+  line_total decimal(15,2) [not null]
+  created_at timestamp [not null, default: `now()`]
+
+  indexes {
+    invoice_id [name: 'idx_invoice_items_invoice_id']
+    product_dimension_id [name: 'idx_invoice_items_product_dimension_id']
+    sales_order_item_id [name: 'idx_invoice_items_sales_order_item_id']
+  }
+}
+
+Table credit_notes {
+  id int [pk, increment]
+  cn_number varchar(40) [not null, unique]
+  invoice_id int [not null]
+  customer_id int [not null]
+  delivery_return_id int
+  reason text [not null]
+  subtotal decimal(15,2) [not null, default: 0.00]
+  tax_amount decimal(15,2) [not null, default: 0.00]
+  total_amount decimal(15,2) [not null, default: 0.00]
+  status varchar(20) [not null, default: 'draft']
+  ip_address varchar(100)
+  mac_address varchar(100)
+  created_by int [not null]
+  created_at timestamp [not null, default: `now()`]
+  updated_by int
+  updated_at timestamp
+
+  indexes {
+    invoice_id [name: 'idx_credit_notes_invoice_id']
+    customer_id [name: 'idx_credit_notes_customer_id']
+    delivery_return_id [name: 'idx_credit_notes_delivery_return_id']
+  }
+
+  note: 'status: draft | issued | applied | refunded'
+}
+
+Table credit_note_items {
+  id int [pk, increment]
+  credit_note_id int [not null]
+  product_dimension_id int [not null]
+  qty decimal(10,3) [not null]
+  unit_price decimal(15,2) [not null]
+  gst_rate decimal(5,2) [not null, default: 0.00]
+  line_total decimal(15,2) [not null]
+  created_at timestamp [not null, default: `now()`]
+
+  indexes {
+    credit_note_id [name: 'idx_credit_note_items_credit_note_id']
+    product_dimension_id [name: 'idx_credit_note_items_product_dimension_id']
+  }
+}
+
+Table purchase_invoices {
+  id int [pk, increment]
+  supplier_invoice_no varchar(80) [not null]
+  supplier_id int [not null]
+  purchase_order_id int
+  invoice_date date [not null]
+  due_date date
+  total_amount decimal(15,2) [not null, default: 0.00]
+  paid_amount decimal(15,2) [not null, default: 0.00]
+  balance_due decimal(15,2) [not null, default: 0.00]
+  status varchar(20) [not null, default: 'unpaid']
+  notes text
+  ip_address varchar(100)
+  mac_address varchar(100)
+  created_by int [not null]
+  created_at timestamp [not null, default: `now()`]
+  updated_by int
+  updated_at timestamp
+
+  indexes {
+    supplier_id [name: 'idx_purchase_invoices_supplier_id']
+    purchase_order_id [name: 'idx_purchase_invoices_purchase_order_id']
+    status [name: 'idx_purchase_invoices_status']
+  }
+
+  note: 'status: unpaid | partially_paid | paid | disputed'
+}
+
+// ============================================================
+// SECTION 8: Payment Tracking
+// ============================================================
+
+Table customer_payments {
+  id int [pk, increment]
+  invoice_id int [not null]
+  customer_id int [not null]
+  payment_date date [not null]
+  amount decimal(15,2) [not null]
+  mode varchar(20) [not null, default: 'cash']
+  reference_number varchar(100)
+  cheque_number varchar(50)
+  cheque_bank varchar(100)
+  cheque_date date
+  tds_amount decimal(15,2) [not null, default: 0.00]
+  notes text
+  reminder_sent_at timestamp
+  reminder_channel varchar(20)
+  ip_address varchar(100)
+  mac_address varchar(100)
+  created_by int [not null]
+  created_at timestamp [not null, default: `now()`]
+
+  indexes {
+    invoice_id [name: 'idx_customer_payments_invoice_id']
+    customer_id [name: 'idx_customer_payments_customer_id']
+    payment_date [name: 'idx_customer_payments_payment_date']
+    mode [name: 'idx_customer_payments_mode']
+  }
+
+  note: 'mode: cash | neft | rtgs | cheque | upi | other. APPEND-ONLY — never update or delete rows.'
+}
+
+Table supplier_payments {
+  id int [pk, increment]
+  purchase_invoice_id int [not null]
+  supplier_id int [not null]
+  payment_date date [not null]
+  amount decimal(15,2) [not null]
+  mode varchar(20) [not null, default: 'neft']
+  reference_number varchar(100)
+  notes text
+  ip_address varchar(100)
+  mac_address varchar(100)
+  created_by int [not null]
+  created_at timestamp [not null, default: `now()`]
+
+  indexes {
+    purchase_invoice_id [name: 'idx_supplier_payments_purchase_invoice_id']
+    supplier_id [name: 'idx_supplier_payments_supplier_id']
+    payment_date [name: 'idx_supplier_payments_payment_date']
+  }
+
+  note: 'APPEND-ONLY — never update or delete rows.'
+}
+
+Table customer_ledger {
+  id int [pk, increment]
+  customer_id int [not null]
+  txn_date date [not null]
+  txn_type varchar(30) [not null]
+  ref_type varchar(50)
+  ref_id int
+  debit decimal(15,2) [not null, default: 0.00]
+  credit decimal(15,2) [not null, default: 0.00]
+  balance decimal(15,2) [not null]
+  description varchar(255)
+  created_at timestamp [not null, default: `now()`]
+
+  indexes {
+    customer_id [name: 'idx_customer_ledger_customer_id']
+    txn_date [name: 'idx_customer_ledger_txn_date']
+    txn_type [name: 'idx_customer_ledger_txn_type']
+  }
+
+  note: 'txn_type: invoice | payment | credit_note | advance | tds | adjustment. APPEND-ONLY.'
+}
+
+// ============================================================
+// SECTION 9: Audit & Notifications
+// ============================================================
+
+Table audit_logs {
+  id int [pk, increment]
+  user_id int
+  module varchar(80) [not null]
+  action varchar(30) [not null]
+  table_name varchar(80) [not null]
+  record_id int
+  old_data json
+  new_data json
+  ip_address varchar(45)
+  mac_address varchar(100)
+  user_agent varchar(300)
+  created_at timestamp [not null, default: `now()`]
+
+  indexes {
+    user_id [name: 'idx_audit_logs_user_id']
+    module [name: 'idx_audit_logs_module']
+    action [name: 'idx_audit_logs_action']
+    table_name [name: 'idx_audit_logs_table_name']
+    record_id [name: 'idx_audit_logs_record_id']
+    created_at [name: 'idx_audit_logs_created_at']
+  }
+
+  note: 'APPEND-ONLY — never update or delete rows. action: create | update | delete | login | logout | export | approve | reject'
+}
+
+Table notifications {
+  id int [pk, increment]
+  user_id int [not null]
+  type varchar(40) [not null]
+  title varchar(200) [not null]
+  message text [not null]
+  ref_type varchar(80)
+  ref_id int
+  is_read tinyint [not null, default: 0]
+  read_at timestamp
+  channel varchar(20) [not null, default: 'in_app']
+  sent_at timestamp
+  created_at timestamp [not null, default: `now()`]
+
+  indexes {
+    user_id [name: 'idx_notifications_user_id']
+    is_read [name: 'idx_notifications_is_read']
+    type [name: 'idx_notifications_type']
+    created_at [name: 'idx_notifications_created_at']
+  }
+
+  note: 'type: low_stock | overdue_payment | delivery_pending | po_due | credit_limit | cheque_due | return_received | order_approval. channel: in_app | email | sms | whatsapp'
+}
+
+// ============================================================
+// RELATIONSHIPS
+// ============================================================
+
+// RBAC
+Ref: auth_user_roles.user_id > auth_users.id
+Ref: auth_user_roles.role_id > auth_roles.id
+Ref: auth_user_roles.assigned_by > auth_users.id
+Ref: auth_roles_permissions_mapping.role_id > auth_roles.id
+Ref: auth_roles_permissions_mapping.permission_id > auth_permissions.id
+Ref: auth_roles_permissions_mapping.module_action_id > auth_module_actions.id
+Ref: auth_roles_permissions_mapping.granted_by > auth_users.id
+Ref: auth_module_actions.module_id > auth_modules.id
+
+// Products & Inventory
+Ref: products.category_id > categories.id
+Ref: products.default_supplier_id > suppliers.id
+Ref: products.created_by > auth_users.id
+Ref: product_dimensions.product_id > products.id
+Ref: stock_ledger.product_dimension_id > product_dimensions.id
+Ref: stock_ledger.batch_lot_id > batch_lots.id
+Ref: stock_ledger.created_by > auth_users.id
+Ref: batch_lots.supplier_id > suppliers.id
+Ref: batch_lots.purchase_order_id > purchase_orders.id
+Ref: batch_lots.created_by > auth_users.id
+Ref: restock_cart.created_by > auth_users.id
+Ref: restock_cart.converted_po_id > purchase_orders.id
+Ref: restock_cart_items.restock_cart_id > restock_cart.id
+Ref: restock_cart_items.product_dimension_id > product_dimensions.id
+
+// Suppliers
+Ref: supplier_products.supplier_id > suppliers.id
+Ref: supplier_products.product_dimension_id > product_dimensions.id
+Ref: supplier_price_history.supplier_id > suppliers.id
+Ref: supplier_price_history.product_dimension_id > product_dimensions.id
+Ref: supplier_price_history.recorded_by > auth_users.id
+Ref: purchase_orders.supplier_id > suppliers.id
+Ref: purchase_orders.created_by > auth_users.id
+Ref: purchase_orders.approved_by > auth_users.id
+Ref: purchase_orders.restock_cart_id > restock_cart.id
+Ref: purchase_order_items.purchase_order_id > purchase_orders.id
+Ref: purchase_order_items.product_dimension_id > product_dimensions.id
+Ref: goods_receipts.purchase_order_id > purchase_orders.id
+Ref: goods_receipts.batch_lot_id > batch_lots.id
+Ref: goods_receipts.received_by > auth_users.id
+Ref: goods_receipt_items.goods_receipt_id > goods_receipts.id
+Ref: goods_receipt_items.purchase_order_item_id > purchase_order_items.id
+
+// Customers
+Ref: customers.price_list_id > price_lists.id
+Ref: customers.created_by > auth_users.id
+Ref: customer_addresses.customer_id > customers.id
+Ref: price_list_items.price_list_id > price_lists.id
+Ref: price_list_items.product_dimension_id > product_dimensions.id
+
+// Sales Orders
+Ref: quotations.customer_id > customers.id
+Ref: quotations.created_by > auth_users.id
+Ref: quotations.converted_order_id > sales_orders.id
+Ref: quotation_items.quotation_id > quotations.id
+Ref: quotation_items.product_dimension_id > product_dimensions.id
+Ref: sales_orders.customer_id > customers.id
+Ref: sales_orders.delivery_address_id > customer_addresses.id
+Ref: sales_orders.quotation_id > quotations.id
+Ref: sales_orders.created_by > auth_users.id
+Ref: sales_orders.approved_by > auth_users.id
+Ref: sales_order_items.sales_order_id > sales_orders.id
+Ref: sales_order_items.product_dimension_id > product_dimensions.id
+Ref: order_amendments.sales_order_id > sales_orders.id
+Ref: order_amendments.amended_by > auth_users.id
+
+// Delivery
+Ref: vehicles.created_by > auth_users.id
+Ref: route_groups.vehicle_id > vehicles.id
+Ref: route_groups.created_by > auth_users.id
+Ref: deliveries.sales_order_id > sales_orders.id
+Ref: deliveries.vehicle_id > vehicles.id
+Ref: deliveries.route_group_id > route_groups.id
+Ref: deliveries.created_by > auth_users.id
+Ref: delivery_items.delivery_id > deliveries.id
+Ref: delivery_items.sales_order_item_id > sales_order_items.id
+Ref: delivery_items.product_dimension_id > product_dimensions.id
+Ref: delivery_returns.delivery_id > deliveries.id
+Ref: delivery_returns.product_dimension_id > product_dimensions.id
+Ref: delivery_returns.credit_note_id > credit_notes.id
+Ref: delivery_returns.received_by > auth_users.id
+
+// Invoices
+Ref: invoices.sales_order_id > sales_orders.id
+Ref: invoices.customer_id > customers.id
+Ref: invoices.delivery_id > deliveries.id
+Ref: invoices.created_by > auth_users.id
+Ref: invoice_items.invoice_id > invoices.id
+Ref: invoice_items.sales_order_item_id > sales_order_items.id
+Ref: invoice_items.product_dimension_id > product_dimensions.id
+Ref: credit_notes.invoice_id > invoices.id
+Ref: credit_notes.customer_id > customers.id
+Ref: credit_notes.delivery_return_id > delivery_returns.id
+Ref: credit_notes.created_by > auth_users.id
+Ref: credit_note_items.credit_note_id > credit_notes.id
+Ref: credit_note_items.product_dimension_id > product_dimensions.id
+Ref: purchase_invoices.supplier_id > suppliers.id
+Ref: purchase_invoices.purchase_order_id > purchase_orders.id
+Ref: purchase_invoices.created_by > auth_users.id
+
+// Payments
+Ref: customer_payments.invoice_id > invoices.id
+Ref: customer_payments.customer_id > customers.id
+Ref: customer_payments.created_by > auth_users.id
+Ref: supplier_payments.purchase_invoice_id > purchase_invoices.id
+Ref: supplier_payments.supplier_id > suppliers.id
+Ref: supplier_payments.created_by > auth_users.id
+Ref: customer_ledger.customer_id > customers.id
+
+// Audit & Notifications
+Ref: audit_logs.user_id > auth_users.id
+Ref: notifications.user_id > auth_users.id

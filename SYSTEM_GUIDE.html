@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>PVC Distributor Admin — System Guide & Flows</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+  // Render flow diagrams. Needs internet (CDN) the first time you open it.
+  window.addEventListener('DOMContentLoaded', () => {
+    if (window.mermaid) {
+      mermaid.initialize({ startOnLoad: true, theme: 'base', themeVariables: {
+        primaryColor: '#fff7ed', primaryBorderColor: '#f59e0b', primaryTextColor: '#1f2937',
+        lineColor: '#9ca3af', fontFamily: 'Segoe UI, Roboto, Helvetica, Arial, sans-serif', fontSize: '14px'
+      }});
+    }
+  });
+</script>
+<style>
+  :root{ --accent:#f59e0b; --accent-soft:#fff7ed; --ink:#1f2937; --muted:#6b7280; --line:#e5e7eb; --bg:#f8fafc; --card:#ffffff;
+         --green:#16a34a; --red:#dc2626; --blue:#2563eb; --amber:#d97706; }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:var(--ink);background:var(--bg);line-height:1.6}
+  a{color:var(--blue);text-decoration:none}
+  /* layout */
+  .wrap{display:flex;max-width:1280px;margin:0 auto}
+  nav.toc{position:sticky;top:0;align-self:flex-start;height:100vh;overflow-y:auto;width:260px;flex:0 0 260px;
+          background:#0f1117;color:#cbd5e1;padding:22px 16px;font-size:13.5px}
+  nav.toc h2{color:#fff;font-size:14px;letter-spacing:.04em;text-transform:uppercase;margin:18px 0 8px}
+  nav.toc h2:first-child{margin-top:0}
+  nav.toc a{display:block;color:#9aa6bd;padding:5px 10px;border-radius:7px;margin:1px 0}
+  nav.toc a:hover{background:#1c2230;color:#fff}
+  nav.toc .brand{display:flex;align-items:center;gap:10px;margin-bottom:18px}
+  nav.toc .brand .logo{width:34px;height:34px;border-radius:9px;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:18px}
+  nav.toc .brand b{color:#fff;font-size:15px}
+  main{flex:1;min-width:0;padding:36px 44px 120px}
+  h1{font-size:30px;margin:0 0 6px}
+  .sub{color:var(--muted);font-size:15px;margin-bottom:28px}
+  section{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:26px 30px;margin-bottom:26px;scroll-margin-top:18px}
+  section h2{font-size:22px;margin:0 0 4px;display:flex;align-items:center;gap:10px}
+  section h2 .ico{width:30px;height:30px;border-radius:8px;background:var(--accent-soft);border:1px solid #fcd9a4;display:inline-flex;align-items:center;justify-content:center;font-size:16px}
+  section h3{font-size:16px;margin:22px 0 6px;color:#111827}
+  p{margin:8px 0}
+  .lead{color:var(--muted)}
+  code{background:#f1f5f9;border:1px solid #e2e8f0;border-radius:5px;padding:1px 6px;font-family:ui-monospace,Consolas,monospace;font-size:13px}
+  .diagram{background:#fcfcfd;border:1px dashed #d6dae1;border-radius:12px;padding:14px;margin:14px 0;overflow-x:auto;text-align:center}
+  table{width:100%;border-collapse:collapse;margin:12px 0;font-size:14px}
+  th,td{border:1px solid var(--line);padding:9px 11px;text-align:left;vertical-align:top}
+  th{background:#f8fafc;font-weight:700}
+  tr:nth-child(even) td{background:#fcfdfe}
+  .badge{display:inline-block;padding:2px 9px;border-radius:999px;font-size:12px;font-weight:700;border:1px solid}
+  .b-green{background:#ecfdf5;color:#047857;border-color:#a7f3d0}
+  .b-red{background:#fef2f2;color:#b91c1c;border-color:#fecaca}
+  .b-amber{background:#fffbeb;color:#b45309;border-color:#fde68a}
+  .b-blue{background:#eff6ff;color:#1d4ed8;border-color:#bfdbfe}
+  .b-grey{background:#f3f4f6;color:#4b5563;border-color:#e5e7eb}
+  .note{border-left:4px solid var(--accent);background:var(--accent-soft);padding:12px 16px;border-radius:0 8px 8px 0;margin:14px 0;font-size:14px}
+  .tip{border-left:4px solid var(--green);background:#f0fdf4;padding:12px 16px;border-radius:0 8px 8px 0;margin:14px 0;font-size:14px}
+  .warn{border-left:4px solid var(--red);background:#fef2f2;padding:12px 16px;border-radius:0 8px 8px 0;margin:14px 0;font-size:14px}
+  ol li,ul li{margin:5px 0}
+  .pill-row{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+  .pill{background:#f1f5f9;border:1px solid #e2e8f0;border-radius:8px;padding:6px 12px;font-size:13px;font-weight:600}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:900px){.grid2{grid-template-columns:1fr}nav.toc{display:none}main{padding:24px}}
+  .kbd{font-family:ui-monospace,monospace;background:#111827;color:#fff;border-radius:5px;padding:1px 7px;font-size:12px}
+  .step{display:flex;gap:12px;margin:10px 0}
+  .step .n{flex:0 0 26px;height:26px;border-radius:50%;background:var(--accent);color:#3a2400;font-weight:800;display:flex;align-items:center;justify-content:center;font-size:13px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<nav class="toc">
+  <div class="brand"><span class="logo">📦</span><b>PVC Admin Guide</b></div>
+  <h2>Start here</h2>
+  <a href="#overview">1. What this system is</a>
+  <a href="#architecture">2. Architecture</a>
+  <a href="#modules">3. All modules (map)</a>
+  <a href="#rbac">4. Roles & access</a>
+  <h2>Core flows</h2>
+  <a href="#user-flow">5. New user / login</a>
+  <a href="#auth">6. Auth & token refresh</a>
+  <a href="#customer-flow">7. New customer</a>
+  <a href="#masters">8. Products & stock setup</a>
+  <a href="#p2p">9. Procure-to-Pay (buying)</a>
+  <a href="#o2c">10. Order-to-Cash (selling)</a>
+  <a href="#getorder">11. How to get an order ▶</a>
+  <a href="#payments">12. Payments & receivables</a>
+  <a href="#mail">13. How email works ✉</a>
+  <a href="#whatsapp">14. WhatsApp reminders</a>
+  <a href="#alerts">15. Automatic alerts (cron)</a>
+  <a href="#reports">16. Reports</a>
+  <a href="#audit">17. Notifications & audit</a>
+  <h2>Reference</h2>
+  <a href="#lifecycles">18. Status lifecycles</a>
+  <a href="#endpoints">19. Module reference table</a>
+  <a href="#glossary">20. Glossary</a>
+</nav>
+
+<main>
+  <h1>PVC Distributor Admin — System Guide</h1>
+  <div class="sub">A complete, visual walkthrough of every module and how work flows through the system — from inviting a user to getting paid.</div>
+
+  <!-- 1 -->
+  <section id="overview">
+    <h2><span class="ico">🧭</span> 1. What this system is</h2>
+    <p class="lead">A distributor management system for a PVC / building-materials business. It runs the full cycle: buy stock from suppliers, hold inventory, sell to customers, deliver, invoice, collect payment, and report on it all — with role-based access so each staff member sees only what they should.</p>
+    <div class="pill-row">
+      <span class="pill">Inventory & Stock</span><span class="pill">Suppliers & Purchasing</span><span class="pill">Customers</span>
+      <span class="pill">Quotations & Sales Orders</span><span class="pill">Delivery & Logistics</span><span class="pill">Invoices & Credit Notes</span>
+      <span class="pill">Payments & Receivables</span><span class="pill">Reports</span><span class="pill">Users / Roles / Audit</span>
+    </div>
+  </section>
+
+  <!-- 2 -->
+  <section id="architecture">
+    <h2><span class="ico">🏗️</span> 2. Architecture (the 3 pieces)</h2>
+    <p>The browser loads the <b>Admin UI</b>, which calls the <b>Backend API</b>, which reads/writes the <b>Database</b>. Emails go out through an SMTP provider; WhatsApp reminders open in your WhatsApp.</p>
+    <div class="diagram">
+      <pre class="mermaid">
+flowchart LR
+    U[👩‍💼 Staff browser] -->|HTTPS| FE[Admin UI<br/>Next.js · port 3000]
+    FE -->|REST /api/v1| BE[Backend API<br/>Node/Express · port 4000]
+    BE --> DB[(PostgreSQL<br/>PVCInventory)]
+    BE -->|SMTP| MAIL[✉ Email provider<br/>Gmail / Mailtrap]
+    FE -.->|wa.me link| WA[📱 WhatsApp]
+    BE -.->|cron 8 AM| CRON[⏰ Alerts job]
+    CRON --> DB
+      </pre>
+    </div>
+    <table>
+      <tr><th>Piece</th><th>Tech</th><th>Job</th></tr>
+      <tr><td>Admin UI</td><td>Next.js 14 + React</td><td>All screens; talks to the API with your login token</td></tr>
+      <tr><td>Backend API</td><td>Node / Express / Knex</td><td>Business rules, auth, RBAC, DB access, email, PDFs</td></tr>
+      <tr><td>Database</td><td>PostgreSQL</td><td>Stores every record (40+ tables)</td></tr>
+    </table>
+  </section>
+
+  <!-- 3 -->
+  <section id="modules">
+    <h2><span class="ico">🗺️</span> 3. All modules (the full map)</h2>
+    <p>Everything reachable from the left sidebar:</p>
+    <div class="diagram">
+      <pre class="mermaid">
+flowchart TB
+    D[🏠 Dashboard]
+    subgraph INV[📦 Inventory]
+      P1[Products] --- P2[Stock Ledger] --- P3[Batch & Lots] --- P4[Restock Cart] --- P5[Categories]
+    end
+    subgraph SUP[🏭 Suppliers]
+      S1[Supplier List] --- S2[Purchase Orders] --- S3[Goods Receipts] --- S4[Supplier Invoices]
+    end
+    subgraph CUS[👥 Customers]
+      C1[Customer List] --- C2[Price Lists] --- C3[Ledger]
+    end
+    subgraph SAL[🛒 Sales]
+      O1[Quotations] --- O2[Sales Orders] --- O3[Templates]
+    end
+    subgraph DEL[🚚 Delivery]
+      L1[Deliveries] --- L2[Vehicles] --- L3[Route Groups] --- L4[Returns]
+    end
+    subgraph BIL[🧾 Billing]
+      B1[Invoices] --- B2[Credit Notes]
+    end
+    subgraph PAY[💳 Payments]
+      Y1[Customer Payments] --- Y2[Supplier Payments] --- Y3[Aging Report] --- Y4[Cheques Due]
+    end
+    subgraph ADM[🛡️ Admin]
+      A1[Users] --- A2[Roles] --- A3[Audit Logs]
+    end
+    R[📊 Reports]
+    N[🔔 Notifications]
+      </pre>
+    </div>
+  </section>
+
+  <!-- 4 -->
+  <section id="rbac">
+    <h2><span class="ico">🛡️</span> 4. Roles & access (RBAC)</h2>
+    <p>Access is controlled per <b>module × action</b>. There are <b>10 modules</b> and <b>6 actions</b> each (view, create, edit, delete, approve, export) = 60 permissions. Roles bundle permissions; users get roles.</p>
+    <div class="diagram">
+      <pre class="mermaid">
+flowchart LR
+    USER[👤 User] -->|has| ROLE[🎖️ Role]
+    ROLE -->|granted| PERM["🔑 Permission<br/>(module.action)"]
+    PERM --> GATE{Allowed?}
+    GATE -->|yes| OK[✅ See page / do action]
+    GATE -->|no| NO[🚫 Hidden / blocked]
+    ADMIN[👑 Admin role] -.bypasses all checks.-> OK
+      </pre>
+    </div>
+    <table>
+      <tr><th>Role</th><th>Typical access</th></tr>
+      <tr><td><span class="badge b-amber">Admin</span></td><td>Everything (bypasses all checks). Manages users, roles, settings.</td></tr>
+      <tr><td><span class="badge b-blue">Sales Staff</span></td><td>Customers, quotations, sales orders; view inventory/invoices/payments.</td></tr>
+      <tr><td><span class="badge b-blue">Warehouse Staff</span></td><td>Inventory, stock, deliveries; view sales orders/suppliers.</td></tr>
+      <tr><td><span class="badge b-blue">Accountant</span></td><td>Invoices, payments, reports; view customers/suppliers.</td></tr>
+      <tr><td><span class="badge b-grey">Viewer</span></td><td>Read-only across all modules.</td></tr>
+    </table>
+    <p>Manage these at <b>Admin → Roles</b> (create roles, toggle each permission) and <b>Admin → Users</b> (assign roles).</p>
+  </section>
+
+  <!-- 5 -->
+  <section id="user-flow">
+    <h2><span class="ico">👋</span> 5. New user onboarding & login</h2>
+    <p>The system is <b>invite-only</b> — nobody can self-sign-up. An Admin invites a person; they set their own password from an emailed link.</p>
+    <div class="diagram">
+      <pre class="mermaid">
+sequenceDiagram
+    participant A as 👑 Admin
+    participant S as System
+    participant E as ✉ Email inbox
+    participant N as 🙋 New user
+    A->>S: Admin → Users → "Invite User"<br/>(name, email, phone, role)
+    S->>S: Create user (status INVITED, no password)
+    S->>E: Send invite email with set-password link
+    N->>E: Opens email, clicks link
+    N->>S: /auth/set-password (chooses password)
+    S->>S: Activate account (status ACTIVE)
+    N->>S: /auth/login (email + password)
+    S-->>N: Token + redirect to 🏠 Dashboard
+      </pre>
+    </div>
+    <h3>Forgot / reset password</h3>
+    <div class="diagram">
+      <pre class="mermaid">
+flowchart LR
+    F[Login → "Forgot password?"] --> G[Enter email]
+    G --> H[✉ Reset link emailed]
+    H --> I[/auth/reset-password/]
+    I --> J[Set new password] --> K[✅ Login]
+      </pre>
+    </div>
+    <div class="note"><b>Where:</b> Invite at <code>Admin → Users → Invite User</code>. If the email didn't arrive, use the <b>Resend Invite</b> action on that user. Emails require SMTP to be configured (see §13).</div>
+  </section>
+
+  <!-- 6 -->
+  <section id="auth">
+    <h2><span class="ico">🔐</span> 6. Authentication & token refresh</h2>
+    <p>Login returns a short-lived <b>access token</b> (15 min) used on every API call, plus a long-lived <b>refresh token</b> stored in a secure cookie (7 days). When the access token expires, the app silently refreshes it — so you stay logged in without re-typing your password.</p>
+    <div class="diagram">
+      <pre class="mermaid">
+sequenceDiagram
+    participant B as Browser (Admin UI)
+    participant API as Backend
+    B->>API: POST /auth/login (email, password)
+    API-->>B: access token (15m) + refresh cookie (7d)
+    B->>API: any request + Bearer access token
+    Note over B,API: ...15 minutes pass, token expires...
+    B->>API: request → 401 Unauthorized
+    B->>API: POST /auth/refresh (refresh cookie)
+    API-->>B: fresh access token
+    B->>API: retry original request ✅
+      </pre>
+    </div>
+  </section>
+
+  <!-- 7 -->
+  <section id="customer-flow">
+    <h2><span class="ico">👥</span> 7. New customer flow</h2>
+    <div class="diagram">
+      <pre class="mermaid">
+flowchart LR
+    A[Customers → Add Customer] --> B["Fill: business name, contact,<br/>📱 phone (recommended), email,<br/>GST, type, credit limit/days"]
+    B --> C[Save]
+    C --> D[Customer appears in list]
+    D --> E[Used in Orders, Invoices,<br/>Ledger, WhatsApp reminders]
+      </pre>
+    </div>
+    <div class="tip"><b>📱 Phone matters:</b> the customer's phone is what WhatsApp payment reminders use. Add it with country code (a 10-digit number auto-gets +91). It's marked <em>recommended</em> on the form.</div>
+    <p><b>Customer controls:</b> Edit, place <b>On Hold</b> (blocks new orders), set <b>credit limit & days</b> (orders are blocked if they'd exceed the limit), and view their <b>Ledger</b> (running balance of billed vs paid) and detail page (outstanding, top products, recent orders).</p>
+  </section>
+
+  <!-- 8 -->
+  <section id="masters">
+    <h2><span class="ico">🧱</span> 8. Products & stock setup (master data)</h2>
+    <p>Before selling, set up what you stock. A <b>Product</b> (e.g. "ACP Sheet") has one or more <b>SKUs / dimensions</b> (e.g. 4mm × 5×20). Stock is tracked per SKU through the <b>Stock Ledger</b>.</p>
+    <div class="diagram">
+      <pre class="mermaid">
+flowchart LR
+    CAT[Categories] --> PROD[Products]
+    PROD --> DIM["SKUs / Dimensions<br/>(size, selling price)"]
+    DIM --> STK[(Stock Ledger)]
+    GR[Goods Receipt] -->|stock IN ➕| STK
+    DSP[Delivery dispatch] -->|stock OUT ➖| STK
+    ADJ[Adjustment / Damage] --> STK
+    STK --> LOW{Below threshold?}
+    LOW -->|yes| ALERT[🔔 Low-stock alert]
+      </pre>
+    </div>
+    <p><b>Related screens:</b> <code>Inventory → Categories / Products / Stock Ledger / Batch & Lots / Restock Cart</code>. Every stock change (receipt, dispatch, adjustment, damage) writes a line to the Stock Ledger, so current quantity is always the sum of its movements.</p>
+  </section>
+
+  <!-- 9 -->
+  <section id="p2p">
+    <h2><span class="ico">🏭</span> 9. Procure-to-Pay (buying stock)</h2>
+    <p>How stock comes in and how you pay suppliers.</p>
+    <div class="diagram">
+      <pre class="mermaid">
+flowchart LR
+    RC[📥 Restock Cart<br/>auto-suggest low items] --> PO[Purchase Order]
+    PO --> AP{Approve}
+    AP -->|approved| GR[Goods Receipt<br/>record what arrived]
+    GR -->|stock IN ➕| STK[(Stock Ledger)]
+    GR --> SI[Supplier Invoice<br/>bill from supplier]
+    SI --> SP[💸 Supplier Payment]
+    SP --> DONE[✅ Supplier paid]
+      </pre>
+    </div>
+    <ol>
+      <li><b>Restock Cart</b> — auto-suggests items below threshold; convert the cart into a Purchase Order.</li>
+      <li><b>Purchase Order</b> (Suppliers → Purchase Orders) — what you're ordering from which supplier; gets approved.</li>
+      <li><b>Goods Receipt</b> — record what physically arrived → <b>adds stock</b> (and logs damage if any).</li>
+      <li><b>Supplier Invoice</b> — the bill the supplier sends you.</li>
+      <li><b>Supplier Payment</b> (Payments → Supplier Payments) — money you pay out.</li>
+    </ol>
+  </section>
+
+  <!-- 10 -->
+  <section id="o2c">
+    <h2><span class="ico">🔄</span> 10. Order-to-Cash (selling — the big picture)</h2>
+    <p>The heart of the system: from a customer enquiry to money in the bank.</p>
+    <div class="diagram">
+      <pre class="mermaid">
+flowchart LR
+    Q[📝 Quotation<br/>optional] -->|convert| SO[🛒 Sales Order]
+    SO --> CHK{Stock + credit OK?}
+    CHK -->|no| HOLD[⛔ Blocked / backorder]
+    CHK -->|yes| CONF[Confirm order]
+    CONF --> DLV[🚚 Delivery<br/>dispatch]
+    DLV -->|stock OUT ➖| STK[(Stock)]
+    DLV --> INV[🧾 Invoice<br/>issue]
+    INV --> PAY[💳 Payment<br/>full / partial]
+    PAY --> LED[(Customer Ledger)]
+    INV -.overdue.-> REM[📱 WhatsApp reminder]
+    DLV -.problem.-> RET[↩️ Return → Credit Note]
+      </pre>
+    </div>
+    <table>
+      <tr><th>Step</th><th>Screen</th><th>What happens</th></tr>
+      <tr><td>Quotation <span class="badge b-grey">optional</span></td><td>Sales → Quotations</td><td>Price offer; can convert to an order. Save common ones as <b>Templates</b>.</td></tr>
+      <tr><td>Sales Order</td><td>Sales → New Order</td><td>Checks customer not on-hold & within credit limit; creates a draft.</td></tr>
+      <tr><td>Delivery</td><td>Delivery → Deliveries</td><td>Dispatch <b>deducts stock</b>; assign vehicle/route; capture proof.</td></tr>
+      <tr><td>Invoice</td><td>Billing → Invoices</td><td>Issue the bill; download PDF; track balance.</td></tr>
+      <tr><td>Payment</td><td>Invoice → Record Payment</td><td>Updates status to Paid / Partially Paid; posts to ledger.</td></tr>
+      <tr><td>Reminder</td><td>Invoices (green 💬)</td><td>WhatsApp the customer about a pending balance.</td></tr>
+      <tr><td>Return</td><td>Delivery → Returns</td><td>Goods come back → can raise a Credit Note.</td></tr>
+    </table>
+  </section>
+
+  <!-- 11 -->
+  <section id="getorder">
+    <h2><span class="ico">▶️</span> 11. How to get (create) an order — step by step</h2>
+    <div class="step"><div class="n">1</div><div>Go to <b>Sales → Sales Orders → "New Order"</b>.</div></div>
+    <div class="step"><div class="n">2</div><div><b>Pick the customer.</b> Their phone shows instantly (or warns if missing). If the customer is <span class="badge b-red">On Hold</span> or would exceed their credit limit, the order is blocked.</div></div>
+    <div class="step"><div class="n">3</div><div>Choose <b>Delivery Type</b> (our vehicle / customer vehicle) and an optional required date.</div></div>
+    <div class="step"><div class="n">4</div><div><b>Add products:</b> select a Product → its SKU/dimension (the <b>unit price auto-fills</b> from the SKU), set quantity, GST %, discount %. Add more lines as needed.</div></div>
+    <div class="step"><div class="n">5</div><div>Watch the <b>live totals</b> (subtotal, GST, grand total) update.</div></div>
+    <div class="step"><div class="n">6</div><div>Click <b>Create Order</b> → it opens the new order's detail page (status <span class="badge b-grey">draft</span>).</div></div>
+    <div class="step"><div class="n">7</div><div>From the order: <b>Confirm</b> it, then proceed to <b>Delivery</b> → <b>Invoice</b> → <b>Payment</b>.</div></div>
+    <div class="note">An order is always tied to one customer, so it automatically reuses that customer's phone for any later WhatsApp reminders — no need to re-enter a number.</div>
+  </section>
+
+  <!-- 12 -->
+  <section id="payments">
+    <h2><span class="ico">💳</span> 12. Payments & receivables (who owes you)</h2>
+    <p>The hub is <b>Billing → Invoices</b> — it shows due date, total, paid, balance and status, with an <b>Overdue Only</b> filter.</p>
+    <div class="diagram">
+      <pre class="mermaid">
+flowchart LR
+    INV[🧾 Issued invoice] --> P{Record Payment}
+    P -->|full balance| PAID[Status: Paid ✅]
+    P -->|part| PART[Status: Partially Paid]
+    P -->|nothing by due date| OD[Status: Overdue ⏰]
+    PART --> P
+    OD --> P
+    P --> LED[(Customer Ledger<br/>credit entry)]
+    OD --> REM[📱 Remind / Remind All Overdue]
+      </pre>
+    </div>
+    <h3>Recording a payment (this is how you update status)</h3>
+    <ol>
+      <li>Open <b>Billing → Invoices</b> (or an invoice's detail page).</li>
+      <li>Click the <b>₹ Record Payment</b> action on any unpaid invoice.</li>
+      <li>Enter amount (defaults to full balance), mode (cash/UPI/bank/cheque/card), date, reference.</li>
+      <li><b>Full balance → Paid</b>; <b>less → Partially Paid</b>. It also posts a credit to the customer's ledger automatically.</li>
+    </ol>
+    <p><b>Also under Payments:</b> <code>Customer Payments</code> (all receipts), <code>Supplier Payments</code> (what you pay out), <code>Aging Report</code> (0–30/31–60/61–90/90+ buckets), <code>Cheques Due</code> (upcoming cheque dates).</p>
+  </section>
+
+  <!-- 13 -->
+  <section id="mail">
+    <h2><span class="ico">✉️</span> 13. How email works</h2>
+    <p>The backend sends transactional emails through an <b>SMTP</b> provider (configured in <code>pvc-backend/.env</code>). Three emails are automatic:</p>
+    <div class="diagram">
+      <pre class="mermaid">
+flowchart LR
+    subgraph TRIGGERS[What triggers an email]
+      T1[Invite a user]
+      T2[Forgot password]
+      T3[Password changed]
+    end
+    T1 --> SVC[Email service<br/>Nodemailer]
+    T2 --> SVC
+    T3 --> SVC
+    SVC -->|SMTP login| PROV[(Provider<br/>Gmail / Mailtrap / SendGrid)]
+    PROV --> INBOX[📥 Recipient inbox]
+      </pre>
+    </div>
+    <table>
+      <tr><th>Email</th><th>Sent when</th><th>Contains</th></tr>
+      <tr><td>Invite</td><td>Admin creates a user</td><td>Set-password link (48 h)</td></tr>
+      <tr><td>Password reset</td><td>User clicks "Forgot password"</td><td>Reset link (1 h)</td></tr>
+      <tr><td>Password changed</td><td>After reset/set/change</td><td>Confirmation notice</td></tr>
+    </table>
+    <h3>Configuring SMTP</h3>
+    <p>Set these in <code>pvc-backend/.env</code> then restart the backend:</p>
+    <ul>
+      <li><b>Gmail</b> (real delivery): <code>SMTP_HOST=smtp.gmail.com</code>, <code>SMTP_PORT=587</code>, <code>SMTP_USER=you@gmail.com</code>, <code>SMTP_PASS=&lt;16-char App Password&gt;</code>. Needs 2-Step Verification + an App Password (not your normal password).</li>
+      <li><b>Mailtrap</b> (testing only): catches emails in a sandbox inbox; does <em>not</em> deliver to real inboxes.</li>
+    </ul>
+    <div class="tip">On startup the backend logs <code>✓ SMTP ready</code> when it connected, or a warning if not. If email isn't configured, invites/resets won't send.</div>
+  </section>
+
+  <!-- 14 -->
+  <section id="whatsapp">
+    <h2><span class="ico">📱</span> 14. WhatsApp payment reminders</h2>
+    <p>Free, click-to-send reminders for pending payments. It opens WhatsApp with the customer's number and a ready-made message — you tap Send.</p>
+    <div class="diagram">
+      <pre class="mermaid">
+flowchart LR
+    A[Customer has 📱 phone saved] --> B[Customer has an UNPAID invoice]
+    B --> C{Where you click}
+    C -->|per invoice| D[Green 💬 on Invoices row<br/>or invoice detail "Remind"]
+    C -->|in bulk| E["Remind All Overdue"<br/>guided queue]
+    D --> F[WhatsApp opens with<br/>pre-filled message]
+    E --> F
+    F --> G[You tap Send ✅]
+      </pre>
+    </div>
+    <div class="warn"><b>Prerequisites:</b> the green WhatsApp button only appears on <b>unpaid</b> invoices (issued / partially paid / overdue), and only works if the customer has a <b>phone number</b> saved. A brand-new customer with no invoice has nothing to remind yet.</div>
+    <p><b>To verify:</b> set a customer's phone to a number you can check → open an unpaid invoice for them → click 💬 → confirm the message arrives. (Use a recipient different from the WhatsApp account you're sending from.)</p>
+  </section>
+
+  <!-- 15 -->
+  <section id="alerts">
+    <h2><span class="ico">⏰</span> 15. Automatic alerts (scheduled job)</h2>
+    <p>Once a day (default 8 AM) a background job runs three checks and creates in-app notifications for Admins:</p>
+    <div class="diagram">
+      <pre class="mermaid">
+flowchart LR
+    CRON[⏰ Daily 8 AM] --> L[Low-stock check]
+    CRON --> O[Overdue invoices → mark Overdue]
+    CRON --> C[Cheques due soon]
+    L --> NTF[🔔 Notifications]
+    O --> NTF
+    C --> NTF
+      </pre>
+    </div>
+    <p>Configured via <code>ALERT_CRON_SCHEDULE</code>. The job is wrapped so a failure can never crash the API.</p>
+  </section>
+
+  <!-- 16 -->
+  <section id="reports">
+    <h2><span class="ico">📊</span> 16. Reports</h2>
+    <p>Go to <b>Reports</b>, click any card → it runs and shows the data on screen, with summary stat cards. Filter by date and <b>export CSV / PDF</b>.</p>
+    <div class="pill-row">
+      <span class="pill">Sales</span><span class="pill">Purchases</span><span class="pill">Profit & Loss</span><span class="pill">Stock</span>
+      <span class="pill">Stock Movement</span><span class="pill">Dead Stock</span><span class="pill">Payments</span><span class="pill">Outstanding</span>
+      <span class="pill">Aging</span><span class="pill">GST (GSTR-1)</span><span class="pill">Customer Profitability</span><span class="pill">Deliveries</span>
+      <span class="pill">Supplier Price Trends</span><span class="pill">Staff Performance</span>
+    </div>
+  </section>
+
+  <!-- 17 -->
+  <section id="audit">
+    <h2><span class="ico">🔔</span> 17. Notifications & audit logs</h2>
+    <div class="grid2">
+      <div>
+        <h3>Notifications</h3>
+        <p>Bell icon in the top bar + the <b>Notifications</b> page. Shows low-stock, overdue, and cheque alerts. Mark one or all as read.</p>
+      </div>
+      <div>
+        <h3>Audit Logs <span class="badge b-amber">Admin</span></h3>
+        <p><b>Admin → Audit Logs</b> records who did what (create/edit/delete), on which module, when, and from which IP. Filter by action/module.</p>
+      </div>
+    </div>
+    <p>The top bar also has a <b>global search</b> (customers, products, suppliers) that jumps straight to a record.</p>
+  </section>
+
+  <!-- 18 -->
+  <section id="lifecycles">
+    <h2><span class="ico">🔁</span> 18. Status lifecycles</h2>
+    <div class="grid2">
+      <div>
+        <h3>Sales Order</h3>
+        <div class="diagram"><pre class="mermaid">
+flowchart LR
+  d[draft] --> c[confirmed] --> p[processing] --> done[completed]
+  d -.-> x[cancelled]
+  c -.-> x
+        </pre></div>
+      </div>
+      <div>
+        <h3>Invoice</h3>
+        <div class="diagram"><pre class="mermaid">
+flowchart LR
+  dr[draft] --> is[issued]
+  is --> pp[partially paid] --> pd[paid]
+  is --> pd
+  is -.past due.-> ov[overdue] --> pd
+  dr -.-> ca[cancelled]
+        </pre></div>
+      </div>
+      <div>
+        <h3>Purchase Order</h3>
+        <div class="diagram"><pre class="mermaid">
+flowchart LR
+  d[draft] --> s[sent] --> a[approved] --> pr[partially received] --> r[received]
+  a --> r
+  d -.-> x[cancelled]
+        </pre></div>
+      </div>
+      <div>
+        <h3>Delivery</h3>
+        <div class="diagram"><pre class="mermaid">
+flowchart LR
+  sc[scheduled] --> di[dispatched] --> it[in transit] --> dl[delivered]
+  sc -.-> ca[cancelled]
+        </pre></div>
+      </div>
+    </div>
+    <div class="pill-row">
+      <span class="badge b-grey">draft</span>
+      <span class="badge b-blue">issued / sent</span>
+      <span class="badge b-amber">partially paid / pending</span>
+      <span class="badge b-green">paid / approved / delivered</span>
+      <span class="badge b-red">overdue / cancelled</span>
+    </div>
+  </section>
+
+  <!-- 19 -->
+  <section id="endpoints">
+    <h2><span class="ico">📚</span> 19. Module reference table</h2>
+    <table>
+      <tr><th>Module</th><th>Pages</th><th>Key API base</th><th>Purpose</th></tr>
+      <tr><td>Auth</td><td>login, forgot/reset/set password</td><td><code>/auth</code></td><td>Login, tokens, password flows, profile</td></tr>
+      <tr><td>Users</td><td>Admin → Users, user detail</td><td><code>/users</code></td><td>Invite, edit, roles, activate, resend invite</td></tr>
+      <tr><td>Roles</td><td>Admin → Roles</td><td><code>/roles</code>, <code>/modules</code></td><td>Role CRUD + permission editor</td></tr>
+      <tr><td>Categories</td><td>Inventory → Categories</td><td><code>/categories</code></td><td>Group products</td></tr>
+      <tr><td>Products</td><td>Inventory → Products, product detail</td><td><code>/products</code></td><td>Products & their SKUs/dimensions</td></tr>
+      <tr><td>Stock</td><td>Inventory → Stock Ledger</td><td><code>/stock</code></td><td>Current qty & movements per SKU</td></tr>
+      <tr><td>Batch & Lots</td><td>Inventory → Batch & Lots</td><td><code>/batch-lots</code></td><td>Lot tracking</td></tr>
+      <tr><td>Restock</td><td>Inventory → Restock Cart</td><td><code>/restock-cart</code></td><td>Auto-suggest & build POs</td></tr>
+      <tr><td>Suppliers</td><td>Suppliers → List</td><td><code>/suppliers</code></td><td>Supplier master + products/prices</td></tr>
+      <tr><td>Purchase Orders</td><td>Suppliers → Purchase Orders</td><td><code>/purchase-orders</code></td><td>Buy stock; approve; receive</td></tr>
+      <tr><td>Goods Receipts</td><td>Suppliers → Goods Receipts</td><td><code>/purchase-orders/receipts</code></td><td>Stock-in on arrival</td></tr>
+      <tr><td>Supplier Invoices</td><td>Suppliers → Supplier Invoices</td><td><code>/purchase-invoices</code></td><td>Bills from suppliers</td></tr>
+      <tr><td>Customers</td><td>Customers → List, detail, Ledger</td><td><code>/customers</code>, <code>/customer-ledger</code></td><td>Customer master, credit, statements</td></tr>
+      <tr><td>Price Lists</td><td>Customers → Price Lists</td><td><code>/price-lists</code></td><td>Tiered pricing</td></tr>
+      <tr><td>Quotations</td><td>Sales → Quotations</td><td><code>/quotations</code></td><td>Price offers → convert to orders</td></tr>
+      <tr><td>Sales Orders</td><td>Sales → Orders, New Order, detail</td><td><code>/sales-orders</code></td><td>Customer orders (credit/stock checks)</td></tr>
+      <tr><td>Deliveries</td><td>Delivery → Deliveries/Vehicles/Routes/Returns</td><td><code>/deliveries</code>, <code>/vehicles</code>, <code>/route-groups</code></td><td>Dispatch, logistics, returns</td></tr>
+      <tr><td>Invoices</td><td>Billing → Invoices, detail</td><td><code>/invoices</code></td><td>Bill customers; PDF; payments; reminders</td></tr>
+      <tr><td>Credit Notes</td><td>Billing → Credit Notes</td><td><code>/credit-notes</code></td><td>Refunds / returns credit</td></tr>
+      <tr><td>Payments</td><td>Payments → Customer/Supplier/Aging/Cheques</td><td><code>/customer-payments</code>, <code>/supplier-payments</code></td><td>Money in & out, aging</td></tr>
+      <tr><td>Reports</td><td>Reports</td><td><code>/reports</code></td><td>14 reports, CSV/PDF export</td></tr>
+      <tr><td>Notifications</td><td>Notifications</td><td><code>/notifications</code></td><td>In-app alerts</td></tr>
+      <tr><td>Audit Logs</td><td>Admin → Audit Logs</td><td><code>/audit-logs</code></td><td>Who did what, when</td></tr>
+    </table>
+  </section>
+
+  <!-- 20 -->
+  <section id="glossary">
+    <h2><span class="ico">📖</span> 20. Glossary</h2>
+    <table>
+      <tr><th>Term</th><th>Meaning</th></tr>
+      <tr><td>SKU / Dimension</td><td>A specific variant of a product (size/spec) that stock is counted against.</td></tr>
+      <tr><td>Stock Ledger</td><td>The list of every stock movement; current quantity = sum of movements.</td></tr>
+      <tr><td>Goods Receipt</td><td>Recording stock that physically arrived from a supplier (adds stock).</td></tr>
+      <tr><td>Sales Order</td><td>A confirmed customer order, before delivery/invoicing.</td></tr>
+      <tr><td>Invoice</td><td>The bill sent to a customer; tracks total, paid, balance, status.</td></tr>
+      <tr><td>Credit Note</td><td>A credit issued to a customer (e.g. for a return).</td></tr>
+      <tr><td>Ledger</td><td>A running account of what a customer was billed vs what they paid.</td></tr>
+      <tr><td>Aging</td><td>How long invoices have been unpaid, bucketed (0–30/31–60/61–90/90+ days).</td></tr>
+      <tr><td>RBAC</td><td>Role-Based Access Control — permissions grouped into roles given to users.</td></tr>
+      <tr><td>On Hold</td><td>A customer flagged so no new orders can be created for them.</td></tr>
+    </table>
+    <p style="color:var(--muted);font-size:13px;margin-top:18px">Generated guide for the PVC Distributor Admin system. Diagrams render with Mermaid.js (needs internet the first time you open this file).</p>
+  </section>
+
+</main>
+</div>
+</body>
+</html>

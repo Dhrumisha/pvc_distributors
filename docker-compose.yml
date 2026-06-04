@@ -1,0 +1,78 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# PVC Distributor Admin — full stack (database + backend + admin UI + HTTPS proxy)
+#
+#   1. cp .env.deploy.example .env                 and fill in the values
+#   2. cp pvc-backend/.env.production.example pvc-backend/.env.production   and fill it
+#   3. docker compose up -d --build
+#   4. (first run, optional demo data) docker compose exec backend npm run seed
+#
+# Caddy terminates HTTPS and routes:  /api/* /health /uploads/* → backend, else → UI
+# ──────────────────────────────────────────────────────────────────────────────
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    restart: unless-stopped
+
+  backend:
+    build: ./pvc-backend
+    env_file:
+      - ./pvc-backend/.env.production
+    environment:
+      NODE_ENV: production
+      PORT: "4000"
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      # Redis is optional; leave disabled unless you add a redis service
+      REDIS_ENABLED: "false"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - uploads:/app/uploads
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./pvc-admin
+      args:
+        # same-origin behind Caddy — works on any domain, no rebuild needed
+        NEXT_PUBLIC_API_URL: /api/v1
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:2-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      SITE_ADDRESS: ${SITE_ADDRESS}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - frontend
+      - backend
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  uploads:
+  caddy_data:
+  caddy_config:

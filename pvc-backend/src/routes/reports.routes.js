@@ -1,0 +1,20 @@
+// src/routes/reports.routes.js
+const router = require('express').Router();
+const auth   = require('../middleware/auth');
+const rbac   = require('../middleware/rbac');
+const ctrl   = require('../controllers/reports.controller');
+router.get('/sales',                auth, rbac('reports','view'), ctrl.sales);
+router.get('/purchases',            auth, rbac('reports','view'), ctrl.purchases);
+router.get('/profit-loss',          auth, rbac('reports','view'), ctrl.profitLoss);
+router.get('/customer-profitability',auth,rbac('reports','view'), ctrl.customerProfitability);
+router.get('/sales-staff',          auth, rbac('reports','view'), ctrl.salesStaff);
+router.get('/stock',                auth, rbac('reports','view'), ctrl.stock);
+router.get('/stock-movement',       auth, rbac('reports','view'), ctrl.stockMovement);
+router.get('/dead-stock',           auth, rbac('reports','view'), ctrl.deadStock);
+router.get('/payments',             auth, rbac('reports','view'), ctrl.payments);
+router.get('/outstanding',          auth, rbac('reports','view'), ctrl.outstanding);
+router.get('/aging',                auth, rbac('reports','view'), ctrl.aging);
+router.get('/gst',                  auth, rbac('reports','view'), ctrl.gst);
+router.get('/supplier-price-trend', auth, rbac('reports','view'), ctrl.supplierPriceTrend);
+router.get('/deliveries',           auth, rbac('reports','view'), ctrl.deliveries);
+module.exports = router;

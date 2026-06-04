@@ -1,0 +1,20 @@
+# Caddy reverse proxy with automatic HTTPS.
+#
+# SITE_ADDRESS controls the hostname + TLS:
+#   • A real hostname (e.g. pvcadmin.duckdns.org) → Caddy gets a free HTTPS cert automatically.
+#   • ":80"  → plain HTTP only (use ONLY for a quick IP test; logins won't persist without HTTPS).
+#
+# Routing: API + health + uploads go to the backend; everything else to the Next.js UI.
+
+{$SITE_ADDRESS} {
+	encode gzip
+
+	@backend path /api/* /health /uploads/*
+	handle @backend {
+		reverse_proxy backend:4000
+	}
+
+	handle {
+		reverse_proxy frontend:3000
+	}
+}

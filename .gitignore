@@ -1,0 +1,37 @@
+# ── Dependencies / build output ──
+**/node_modules/
+**/.next/
+**/dist/
+**/build/
+pvc-admin/.next/
+
+# ── Secrets & environment (NEVER commit) ──
+.env
+.env.local
+.env.production
+pvc-backend/.env
+pvc-backend/.env.production
+pvc-admin/.env
+pvc-admin/.env.local
+# keep the templates:
+!.env.deploy.example
+!**/.env.example
+!**/.env.production.example
+
+# ── Runtime data ──
+**/logs/
+**/uploads/
+**/backups/
+*.log
+
+# ── Local database dumps (data — don't push) ──
+/pvc_admin_full.sql
+*_dump.sql
+
+# ── Misc / OS / editor ──
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.tsbuildinfo
+next-env.d.ts
