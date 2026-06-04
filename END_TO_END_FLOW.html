@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>PVC Admin — End-to-End Flow</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+  window.addEventListener('DOMContentLoaded', () => {
+    if (window.mermaid) mermaid.initialize({ startOnLoad:true, theme:'base', themeVariables:{
+      primaryColor:'#fff7ed', primaryBorderColor:'#f59e0b', primaryTextColor:'#1f2937',
+      lineColor:'#94a3b8', fontFamily:'Segoe UI, Roboto, Arial, sans-serif', fontSize:'14px'
+    }});
+  });
+</script>
+<style>
+  :root{--accent:#f59e0b;--soft:#fff7ed;--ink:#1f2937;--muted:#6b7280;--line:#e5e7eb;--bg:#f8fafc;--card:#fff}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:'Segoe UI',Roboto,Arial,sans-serif;color:var(--ink);background:var(--bg);line-height:1.6}
+  header.top{background:#0f1117;color:#fff;padding:28px 40px}
+  header.top .logo{display:inline-flex;align-items:center;gap:12px}
+  header.top .logo span{width:38px;height:38px;border-radius:10px;background:var(--accent);display:inline-flex;align-items:center;justify-content:center;font-size:20px}
+  header.top h1{margin:0;font-size:24px}
+  header.top p{margin:4px 0 0;color:#9aa6bd;font-size:14px}
+  main{max-width:1180px;margin:0 auto;padding:28px 24px 100px}
+  section{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin:22px 0}
+  h2{font-size:20px;margin:0 0 4px;display:flex;align-items:center;gap:9px}
+  h2 .i{width:30px;height:30px;border-radius:8px;background:var(--soft);border:1px solid #fcd9a4;display:inline-flex;align-items:center;justify-content:center;font-size:16px}
+  .lead{color:var(--muted);margin:2px 0 14px}
+  .diagram{background:#fcfcfd;border:1px dashed #d6dae1;border-radius:12px;padding:16px;overflow-x:auto;text-align:center}
+  .legend{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+  .tag{font-size:12px;font-weight:700;border-radius:999px;padding:3px 11px;border:1px solid}
+  .g{background:#ecfdf5;color:#047857;border-color:#a7f3d0}
+  .r{background:#fef2f2;color:#b91c1c;border-color:#fecaca}
+  .a{background:#fffbeb;color:#b45309;border-color:#fde68a}
+  .b{background:#eff6ff;color:#1d4ed8;border-color:#bfdbfe}
+  .note{border-left:4px solid var(--accent);background:var(--soft);padding:11px 15px;border-radius:0 8px 8px 0;font-size:14px;margin-top:14px}
+  code{background:#f1f5f9;border:1px solid #e2e8f0;border-radius:5px;padding:1px 6px;font-family:ui-monospace,Consolas,monospace;font-size:13px}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="logo"><span>📦</span>
+    <div><h1>PVC Distributor Admin — End-to-End Flow</h1>
+    <p>The whole journey: invite a user → stock in → sell → deliver → invoice → get paid → report. Plus the live cloud setup.</p></div>
+  </div>
+</header>
+<main>
+
+  <!-- MASTER FLOW -->
+  <section>
+    <h2><span class="i">🔄</span> 1. Master business flow (everything, end to end)</h2>
+    <p class="lead">Follow the arrows top-to-bottom. Green = money/stock in, red = problem paths, amber = automatic background jobs.</p>
+    <div class="diagram">
+      <pre class="mermaid">
+flowchart TD
+    %% ===== ONBOARDING =====
+    subgraph ONB[👋 Onboarding]
+      O1[Admin invites user] --> O2[User sets password via email link] --> O3[Login → Dashboard]
+    end
+
+    %% ===== MASTER DATA =====
+    subgraph MAS[🧱 Set up master data]
+      M1[Categories → Products → SKUs/Dimensions]
+      M2[Suppliers]
+      M3["Customers (+ 📱 phone)"]
+    end
+    O3 --> M1 & M2 & M3
+
+    %% ===== PROCURE TO PAY =====
+    subgraph P2P[🏭 Buy stock — Procure-to-Pay]
+      PA[Restock Cart] --> PB[Purchase Order] --> PC{Approve} --> PD[Goods Receipt]
+      PD --> PE[Supplier Invoice] --> PF[💸 Supplier Payment]
+    end
+    M2 --> PA
+    PD -->|stock IN ➕| STK[(📦 Stock Ledger)]
+
+    %% ===== ORDER TO CASH =====
+    subgraph O2C[🛒 Sell — Order-to-Cash]
+      SA[Quotation optional] --> SB[Sales Order]
+      SB --> SC{Credit limit &amp; stock OK?}
+      SC -->|no| SX[⛔ Blocked / on-hold / backorder]
+      SC -->|yes| SD[Confirm order]
+      SD --> SE[🚚 Delivery — dispatch]
+      SE --> SF[🧾 Invoice — issue]
+      SF --> SG{Payment}
+      SG -->|full| SH[✅ Paid]
+      SG -->|partial| SI[🟡 Partially paid]
+      SG -->|not by due date| SJ[⏰ Overdue]
+      SI --> SG
+    end
+    M1 --> SB
+    M3 --> SA
+    SE -->|stock OUT ➖| STK
+    SG --> LED[(📒 Customer Ledger)]
+    SE -->|goods returned| RET[↩️ Return → Credit Note]
+    SJ --> REM["📱 WhatsApp reminder<br/>(single or Remind-All-Overdue)"]
+
+    %% ===== REPORTING =====
+    SH --> RPT[📊 Reports &amp; Dashboard]
+    LED --> RPT
+    STK --> RPT
+
+    %% ===== AUTOMATIC ALERTS =====
+    STK -.daily 8 AM.-> AL[⏰ Alerts cron]
+    SJ -.daily 8 AM.-> AL
+    AL --> NTF[🔔 Notifications to Admin]
+      </pre>
+    </div>
+    <div class="legend">
+      <span class="tag g">stock / money IN</span>
+      <span class="tag r">blocked / overdue / return</span>
+      <span class="tag a">automatic (cron)</span>
+      <span class="tag b">core document step</span>
+    </div>
+    <div class="note">Everything ties to a <b>customer</b> (orders, invoices, ledger, reminders) and to a <b>SKU</b> (stock in/out). Recording a payment is what flips an invoice to <b>Paid / Partially Paid</b> and posts to the ledger.</div>
+  </section>
+
+  <!-- ORDER-TO-CASH DETAIL -->
+  <section>
+    <h2><span class="i">🛒</span> 2. "How an order becomes cash" (the critical path)</h2>
+    <div class="diagram">
+      <pre class="mermaid">
+sequenceDiagram
+    participant C as Customer
+    participant S as Sales staff
+    participant W as Warehouse
+    participant A as Accounts
+    S->>S: New Order (pick customer, add products)
+    S->>S: System checks credit limit + on-hold
+    S->>W: Order confirmed
+    W->>W: Delivery dispatch (stock deducted)
+    W->>A: Goods delivered
+    A->>C: Invoice issued (PDF)
+    C->>A: Pays (full / partial / cheque)
+    A->>A: Record Payment → status updates, ledger credited
+    A-->>C: If overdue → WhatsApp reminder
+      </pre>
+    </div>
+  </section>
+
+  <!-- STOCK DATA FLOW -->
+  <section>
+    <h2><span class="i">📦</span> 3. Stock movement (single source of truth)</h2>
+    <p class="lead">Current quantity of any SKU = the sum of all its ledger movements.</p>
+    <div class="diagram">
+      <pre class="mermaid">
+flowchart LR
+    GR[Goods Receipt] -->|+ qty| L[(Stock Ledger)]
+    OB[Opening Balance] -->|+ qty| L
+    ADJ[Adjustment +/-] --> L
+    DMG[Damage] -->|- qty| L
+    DSP[Delivery dispatch] -->|- qty| L
+    RET[Return restock] -->|+ qty| L
+    L --> NOW[Current qty per SKU]
+    NOW --> LOW{Below threshold?}
+    LOW -->|yes| AL[🔔 Low-stock alert]
+      </pre>
+    </div>
+  </section>
+
+  <!-- LIVE DEPLOYMENT -->
+  <section>
+    <h2><span class="i">☁️</span> 4. Live deployment (how it runs in the cloud)</h2>
+    <p class="lead">UI on Vercel, API + database on Render. A request and its login token flow like this:</p>
+    <div class="diagram">
+      <pre class="mermaid">
+flowchart LR
+    U[🌐 Browser] -->|https| V["Vercel<br/>pvc-admin.vercel.app<br/>(Next.js UI)"]
+    V -->|"/api/v1 calls<br/>Bearer token + cookie"| R["Render<br/>pvc-backend...onrender.com<br/>(Express API)"]
+    R --> DB[("Render PostgreSQL<br/>pvc_admin")]
+    R -->|SMTP| MX[✉ Email — Mailtrap/Gmail]
+    V -.->|wa.me link| WA[📱 WhatsApp]
+    R -.->|daily 8 AM| CRON[⏰ Alerts]
+      </pre>
+    </div>
+    <div class="note">Because UI and API are on <b>different domains</b>, the login refresh cookie is <code>SameSite=None; Secure</code> so sessions persist. CORS on the API is locked to the Vercel URL.</div>
+  </section>
+
+  <!-- REDEPLOY FLOW -->
+  <section>
+    <h2><span class="i">🚀</span> 5. Update → redeploy flow</h2>
+    <div class="diagram">
+      <pre class="mermaid">
+flowchart TD
+    DEV[You make a change] --> Q{What changed?}
+    Q -->|Backend code| GP[git push to GitHub]
+    Q -->|DB schema| MIG[Add migration file → git push]
+    Q -->|Frontend code| FE{Frontend deploy}
+
+    GP --> RND[Render auto-builds &amp; redeploys ✅]
+    MIG --> RND
+    RND --> RUN[On boot: npm run migrate<br/>applies new migrations]
+
+    FE -->|Option A| CLI["Re-run: npx vercel deploy --prod"]
+    FE -->|Option B| CONN[Connect Vercel ↔ GitHub once<br/>→ then auto-deploys on push]
+    CLI --> LIVEF[New UI live]
+    CONN --> LIVEF
+      </pre>
+    </div>
+    <div class="legend">
+      <span class="tag g">Backend &amp; DB = automatic on git push</span>
+      <span class="tag a">Frontend = CLI command, or connect Git for auto</span>
+    </div>
+    <div class="note">Env-var changes: Render redeploys automatically; on Vercel you must redeploy after changing <code>NEXT_PUBLIC_API_URL</code> (it's baked in at build time). Never run <code>npm run seed</code> on the live DB — it wipes &amp; recreates users/roles.</div>
+  </section>
+
+  <p style="color:var(--muted);font-size:13px;text-align:center">Diagrams render with Mermaid.js (needs internet the first time). See <b>SYSTEM_GUIDE.html</b> for the full module-by-module guide.</p>
+</main>
+</body>
+</html>
