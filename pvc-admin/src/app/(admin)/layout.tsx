@@ -5,7 +5,7 @@
 // then renders the sidebar + topbar shell.
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import Sidebar from '@/components/layout/Sidebar';
 import Topbar  from '@/components/layout/Topbar';
 import { Package } from 'lucide-react';
@@ -13,6 +13,7 @@ import { Package } from 'lucide-react';
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { user, isLoading, isAuthenticated } = useAuth();
   const router = useRouter();
+  const [navOpen, setNavOpen] = useState(false);
 
   // If user must set password (newly invited), redirect immediately
   useEffect(() => {
@@ -45,15 +46,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   // Middleware already blocked unauthenticated users — render shell
   return (
     <div className="flex h-screen overflow-hidden" style={{ background: 'var(--bg-page)' }}>
-      <Sidebar />
+      <Sidebar open={navOpen} onClose={() => setNavOpen(false)} />
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <Topbar />
-        <main
-          className="flex-1 overflow-y-auto"
-          style={{ padding: '24px 28px' }}
-        >
+        <Topbar onMenu={() => setNavOpen(true)} />
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-7">
           <div className="animate-fade-in">
-            {children}
+            <Suspense fallback={null}>{children}</Suspense>
           </div>
         </main>
       </div>

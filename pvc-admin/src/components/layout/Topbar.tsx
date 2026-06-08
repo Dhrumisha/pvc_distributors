@@ -2,7 +2,7 @@
 // src/components/layout/Topbar.tsx
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { Bell, Search, ChevronRight, RefreshCw, Users, Package, Store, Loader2 } from 'lucide-react';
+import { Bell, Search, ChevronRight, RefreshCw, Users, Package, Store, Loader2, Menu } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { notificationService, customerService, productService, supplierService } from '@/lib/services';
 import Link from 'next/link';
@@ -29,7 +29,7 @@ interface SearchResult {
   href: string;
 }
 
-export default function Topbar() {
+export default function Topbar({ onMenu }: { onMenu?: () => void }) {
   const pathname  = usePathname();
   const router    = useRouter();
   const { user }  = useAuth();
@@ -109,16 +109,20 @@ export default function Topbar() {
 
   return (
     <header
-      className="flex items-center justify-between px-7 flex-shrink-0"
+      className="flex items-center justify-between px-4 md:px-7 flex-shrink-0"
       style={{
         height: 'var(--topbar-h)',
         background: 'var(--bg-sidebar)',
         borderBottom: '1px solid var(--border-default)',
-        gap: 16,
+        gap: 12,
       }}
     >
-      {/* Breadcrumb */}
-      <div className="flex items-center gap-1.5 min-w-0">
+      {/* Mobile hamburger + Breadcrumb */}
+      <div className="flex items-center gap-2 min-w-0">
+        <button className="btn-icon md:hidden" onClick={onMenu} aria-label="Open menu" style={{ flexShrink: 0 }}>
+          <Menu size={18} />
+        </button>
+        <div className="flex items-center gap-1.5 min-w-0">
         {crumbs.map((crumb, i) => (
           <span key={crumb.href} className="flex items-center gap-1.5 min-w-0">
             {i > 0 && <ChevronRight size={12} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />}
@@ -141,6 +145,7 @@ export default function Topbar() {
             )}
           </span>
         ))}
+        </div>
       </div>
 
       {/* Right actions */}

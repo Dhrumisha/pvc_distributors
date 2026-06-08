@@ -87,9 +87,11 @@ const NAV: NavItem[] = [
   {
     label: 'Admin',         icon: <ShieldCheck size={16} />, module: 'users',
     children: [
-      { label: 'Users',       href: '/admin/users' },
-      { label: 'Roles',       href: '/admin/roles' },
-      { label: 'Audit Logs',  href: '/admin/audit' },
+      { label: 'Users',          href: '/admin/users' },
+      { label: 'Roles',          href: '/admin/roles' },
+      { label: 'Customer Portal', href: '/admin/portal' },
+      { label: 'Leads',          href: '/admin/leads' },
+      { label: 'Audit Logs',     href: '/admin/audit' },
     ],
   },
 ];
@@ -149,12 +151,22 @@ function NavGroup({ item }: { item: NavItem }) {
   );
 }
 
-export default function Sidebar() {
+export default function Sidebar({ open = false, onClose }: { open?: boolean; onClose?: () => void }) {
   const { user, logout } = useAuth();
 
   return (
+    <>
+      {/* Mobile backdrop */}
+      {open && (
+        <div className="md:hidden" onClick={onClose}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 40 }} />
+      )}
     <aside
-      className="flex flex-col flex-shrink-0 h-full overflow-y-auto"
+      className={
+        'flex flex-col flex-shrink-0 h-full overflow-y-auto fixed inset-y-0 left-0 z-50 ' +
+        'transform transition-transform duration-200 md:static md:z-auto md:translate-x-0 ' +
+        (open ? 'translate-x-0' : '-translate-x-full')
+      }
       style={{
         width: 'var(--sidebar-w)',
         background: 'var(--bg-sidebar)',
@@ -179,7 +191,8 @@ export default function Sidebar() {
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
+      <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto"
+        onClick={(e) => { if ((e.target as HTMLElement).closest('a')) onClose?.(); }}>
         {NAV.map(item => <NavGroup key={item.label} item={item} />)}
       </nav>
 
@@ -194,7 +207,7 @@ export default function Sidebar() {
             </span>
           </div>
           <div className="flex-1 min-w-0">
-            <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', truncate: true }}
+            <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)' }}
               className="truncate">{user?.name}</div>
             <div style={{ fontSize: 10, color: 'var(--text-muted)' }} className="truncate">{user?.email}</div>
           </div>
@@ -205,5 +218,6 @@ export default function Sidebar() {
         </div>
       </div>
     </aside>
+    </>
   );
 }

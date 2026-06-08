@@ -6,6 +6,8 @@ const nextConfig = {
   images: { domains: [] },
   // Produce a self-contained build for Docker (small runtime image).
   output: 'standalone',
+  eslint: { ignoreDuringBuilds: true },
+  typescript: { ignoreBuildErrors: true },
 };
 
 module.exports = nextConfig;

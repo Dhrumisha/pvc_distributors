@@ -415,3 +415,21 @@ export const auditService = {
   export: (params?: object) =>
     api.get('/audit-logs/export', { params, responseType: 'blob' }),
 };
+
+// ── Leads / Website Enquiries ───────────────────────────────────────────────
+export const enquiryService = {
+  list:        (params?: object) => api.get('/enquiries', { params }),
+  get:         (id: number)      => api.get(`/enquiries/${id}`),
+  setStatus:   (id: number, status: string) => api.patch(`/enquiries/${id}/status`, { status }),
+  remove:      (id: number)      => api.delete(`/enquiries/${id}`),
+  unreadCount: ()                => api.get('/enquiries/unread-count'),
+};
+
+// ── Customer Portal admin (type discounts + approvals) ──────────────────────
+export const portalAdminService = {
+  typeDiscounts:       ()              => api.get('/portal-admin/type-discounts'),
+  saveTypeDiscounts:   (items: object[]) => api.put('/portal-admin/type-discounts', { items }),
+  pending:             ()              => api.get('/portal-admin/pending'),
+  updateCustomer:      (id: number, data: object) => api.patch(`/portal-admin/customers/${id}`, data),
+  approve:             (id: number, data: object) => api.post(`/portal-admin/customers/${id}/approve`, data),
+};

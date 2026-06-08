@@ -1,6 +1,10 @@
 // src/routes/index.js
 const router = require('express').Router();
 
+router.use('/public',             require('./public.routes'));      // marketing website (no auth)
+router.use('/portal',             require('./portal.routes'));      // customer portal (customer auth)
+router.use('/portal-admin',       require('./portalAdmin.routes')); // admin: portal settings/approvals
+router.use('/enquiries',          require('./enquiries.routes'));   // admin view of website leads
 router.use('/auth',               require('./auth.routes'));
 router.use('/users',              require('./users.routes'));
 router.use('/roles',              require('./roles.routes'));
