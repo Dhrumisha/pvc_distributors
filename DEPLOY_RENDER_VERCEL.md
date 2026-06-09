@@ -50,11 +50,24 @@ git push -u origin main
    - `NEXT_PUBLIC_API_URL = https://pvc-backend-xxxx.onrender.com/api/v1`
 5. **Deploy.** Note your UI URL, e.g. **`https://pvc-admin-xxxx.vercel.app`**.
 
-## Step 3 — Connect the two (CORS + cookie origin)
-Back in **Render → pvc-backend → Environment**, set these to your Vercel URL and save (it redeploys):
+## Step 2b — Vercel: the public website (`pvc-website`)
+A **second** Vercel project from the same repo (different root dir):
+1. Vercel → **Add New → Project** → import the same GitHub repo again.
+2. **Root Directory:** set to **`pvc-website`** (important).
+3. Framework: Next.js (auto-detected).
+4. **Environment Variables** → add (server-side, no `NEXT_PUBLIC_` prefix):
+   - `API_BASE_URL = https://pvc-backend-xxxx.onrender.com/api/v1`
+5. **Deploy.** Note your site URL, e.g. **`https://pvc-website-xxxx.vercel.app`**.
+
+> Note: the `pvc-front-backend/` folder is **not** deployed — it's an early fragment
+> whose `public`/`enquiries` routes are already merged into `pvc-backend`.
+
+## Step 3 — Connect them (CORS + cookie origin)
+Back in **Render → pvc-backend → Environment**, set these and save (it redeploys).
+`CORS_ORIGINS` is **comma-separated** — include BOTH the admin UI and the public website:
 ```
 FRONTEND_URL = https://pvc-admin-xxxx.vercel.app
-CORS_ORIGINS = https://pvc-admin-xxxx.vercel.app
+CORS_ORIGINS = https://pvc-admin-xxxx.vercel.app,https://pvc-website-xxxx.vercel.app
 APP_URL      = https://pvc-admin-xxxx.vercel.app
 ```
 > If you use Vercel preview URLs too, add them comma-separated to `CORS_ORIGINS`.
