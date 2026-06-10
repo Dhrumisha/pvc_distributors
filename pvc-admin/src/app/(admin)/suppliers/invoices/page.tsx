@@ -4,7 +4,8 @@ import { useEffect, useState, useCallback } from 'react';
 import { purchaseInvoiceService } from '@/lib/services';
 import { getApiError } from '@/lib/api';
 import toast from 'react-hot-toast';
-import { FileText, ChevronLeft, ChevronRight, X } from 'lucide-react';
+import Link from 'next/link';
+import { FileText, ChevronLeft, ChevronRight, X, Plus } from 'lucide-react';
 
 const FMT = (n: any) => `₹${Number(n).toLocaleString('en-IN')}`;
 const DATE = (x: any) => x ? new Date(x).toLocaleDateString('en-IN') : '—';
@@ -58,6 +59,9 @@ export default function SupplierInvoicesPage() {
           <h1 className="page-title">Supplier Invoices</h1>
           <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 3 }}>{total} invoices</p>
         </div>
+        <Link href="/suppliers/invoices/new" className="btn-primary">
+          <Plus size={14} /> Record Supplier Invoice
+        </Link>
       </div>
 
       <div className="card p-4 flex flex-wrap gap-3">

@@ -4,7 +4,8 @@ import { useEffect, useState, useCallback } from 'react';
 import { quotationService } from '@/lib/services';
 import { getApiError } from '@/lib/api';
 import toast from 'react-hot-toast';
-import { FileText, ChevronLeft, ChevronRight, X, Search } from 'lucide-react';
+import Link from 'next/link';
+import { FileText, ChevronLeft, ChevronRight, X, Search, Plus } from 'lucide-react';
 
 const FMT = (n: number) => `₹${Number(n).toLocaleString('en-IN')}`;
 
@@ -63,6 +64,9 @@ export default function QuotationsPage() {
             {total} quotation{total !== 1 ? 's' : ''} total
           </p>
         </div>
+        <Link href="/sales/quotations/new" className="btn-primary">
+          <Plus size={14} /> New Quotation
+        </Link>
       </div>
 
       {/* Filters */}

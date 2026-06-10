@@ -4,7 +4,8 @@ import { useEffect, useState, useCallback } from 'react';
 import { creditNoteService } from '@/lib/services';
 import { getApiError } from '@/lib/api';
 import toast from 'react-hot-toast';
-import { FileText, ChevronLeft, ChevronRight, X } from 'lucide-react';
+import Link from 'next/link';
+import { FileText, ChevronLeft, ChevronRight, X, Plus } from 'lucide-react';
 
 const FMT  = (n: any) => `₹${Number(n).toLocaleString('en-IN')}`;
 const DATE = (x: any) => x ? new Date(x).toLocaleDateString('en-IN') : '—';
@@ -48,6 +49,9 @@ export default function CreditNotesPage() {
           <h1 className="page-title">Credit Notes</h1>
           <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 3 }}>{total} credit notes</p>
         </div>
+        <Link href="/billing/credit-notes/new" className="btn-primary">
+          <Plus size={14} /> New Credit Note
+        </Link>
       </div>
 
       {/* Filter bar */}

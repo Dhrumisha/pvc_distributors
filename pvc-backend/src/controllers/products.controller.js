@@ -23,10 +23,11 @@ exports.list = async (req, res) => {
 };
 
 exports.create = async (req, res) => {
-  const { name, category_id, unit, hsn_code, gst_rate=0, low_stock_threshold=10, description, default_supplier_id } = req.body;
+  const { name, category_id, unit, hsn_code, gst_rate=0, low_stock_threshold=10, description, default_supplier_id, image_url, badge } = req.body;
   const [product] = await db('products').insert({
     name, category_id, unit, hsn_code, gst_rate, low_stock_threshold, description,
     default_supplier_id: default_supplier_id || null,
+    image_url: image_url || null, badge: badge || null,
     is_active: 1, status:'ACTIVE', ip_address: req.ip,
     created_by: req.user.id, created_at: new Date(), updated_at: new Date()
   }).returning('*');
@@ -71,10 +72,10 @@ exports.getDimensions = async (req, res) => {
 };
 
 exports.addDimension = async (req, res) => {
-  const { sku, dimension_label, purchase_price, selling_price, width_mm, height_mm, thickness_mm } = req.body;
+  const { sku, dimension_label, purchase_price, selling_price, width_mm, height_mm, thickness_mm, color } = req.body;
   const exists = await db('product_dimensions').where({ sku }).first();
   if (exists) throw new AppError(`SKU "${sku}" already exists.`, 409);
-  const [dim] = await db('product_dimensions').insert({ product_id: req.params.id, sku, dimension_label, purchase_price, selling_price, width_mm, height_mm, thickness_mm, is_active:1, status:'ACTIVE', created_by: req.user.id, created_at: new Date() }).returning('*');
+  const [dim] = await db('product_dimensions').insert({ product_id: req.params.id, sku, dimension_label, purchase_price, selling_price, width_mm, height_mm, thickness_mm, color: color || null, is_active:1, status:'ACTIVE', created_by: req.user.id, created_at: new Date() }).returning('*');
   return created(res, { dimension: dim });
 };
 

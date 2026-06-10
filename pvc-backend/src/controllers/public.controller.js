@@ -22,47 +22,55 @@ exports.categories = async (_req, res) => {
   return ok(res, { categories: rows });
 };
 
-// GET /public/products  — active products (category name + price range)
+// stock subquery: current qty per product_dimension
+const stockSub = () => db('stock_ledger').select('product_dimension_id').sum('qty_change as qty').groupBy('product_dimension_id');
+
+// GET /public/products  — ACTIVE, non-deleted products with price range + stock
 exports.products = async (req, res) => {
   const { page = 1, limit = 24, search, category_id } = req.query;
   const offset = (page - 1) * limit;
 
   const base = db('products as p')
     .leftJoin('categories as c', 'c.id', 'p.category_id')
-    .whereNull('p.deleted_at');
+    .whereNull('p.deleted_at').where('p.is_active', 1);   // only published/active
   if (search)      base.whereILike('p.name', `%${search}%`);
   if (category_id) base.where('p.category_id', category_id);
 
   const [{ count }] = await base.clone().count('p.id as count');
   const products = await base.clone()
     .leftJoin('product_dimensions as pd', 'pd.product_id', 'p.id')
-    .groupBy('p.id', 'p.name', 'p.unit', 'p.hsn_code', 'c.name')
+    .leftJoin(stockSub().as('sl'), 'sl.product_dimension_id', 'pd.id')
+    .groupBy('p.id', 'p.name', 'p.unit', 'p.hsn_code', 'p.image_url', 'p.badge', 'c.name')
     .select(
-      'p.id', 'p.name', 'p.unit', 'p.hsn_code',
+      'p.id', 'p.name', 'p.unit', 'p.hsn_code', 'p.image_url', 'p.badge',
       db.raw('c.name as category'),
       db.raw('MIN(pd.selling_price)::float as min_price'),
       db.raw('MAX(pd.selling_price)::float as max_price'),
-      db.raw('COUNT(pd.id)::int as variant_count')
+      db.raw('COUNT(pd.id)::int as variant_count'),
+      db.raw('COALESCE(SUM(sl.qty),0)::float as stock')
     )
     .orderBy('p.name')
     .limit(limit).offset(offset);
 
-  return paginate(res, { products }, { page, limit, total: count });
+  const out = products.map(p => ({ ...p, in_stock: Number(p.stock) > 0 }));
+  return paginate(res, { products: out }, { page, limit, total: count });
 };
 
-// GET /public/products/:id  — one product with its variants
+// GET /public/products/:id  — one product with variants (color + stock)
 exports.product = async (req, res) => {
   const product = await db('products as p')
     .leftJoin('categories as c', 'c.id', 'p.category_id')
-    .where('p.id', req.params.id).whereNull('p.deleted_at')
-    .select('p.id', 'p.name', 'p.unit', 'p.hsn_code', 'p.gst_rate', db.raw('c.name as category'))
+    .where('p.id', req.params.id).whereNull('p.deleted_at').where('p.is_active', 1)
+    .select('p.id', 'p.name', 'p.unit', 'p.hsn_code', 'p.gst_rate', 'p.image_url', 'p.badge', 'p.description', db.raw('c.name as category'))
     .first();
   if (!product) return ok(res, { product: null });
-  const variants = await db('product_dimensions')
-    .where({ product_id: product.id })
-    .select('id', 'sku', 'dimension_label', 'selling_price')
-    .orderBy('sku');
-  return ok(res, { product: { ...product, variants } });
+  const variants = (await db('product_dimensions as pd')
+    .leftJoin(stockSub().as('sl'), 'sl.product_dimension_id', 'pd.id')
+    .where('pd.product_id', product.id)
+    .select('pd.id', 'pd.sku', 'pd.dimension_label', 'pd.color', 'pd.selling_price', db.raw('COALESCE(sl.qty,0)::float as stock'))
+    .orderBy('pd.sku'))
+    .map(v => ({ ...v, in_stock: Number(v.stock) > 0 }));
+  return ok(res, { product: { ...product, variants, in_stock: variants.some(v => v.in_stock) } });
 };
 
 // POST /public/enquiries  — capture a lead from the website

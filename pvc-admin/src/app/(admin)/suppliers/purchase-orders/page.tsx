@@ -4,7 +4,8 @@ import { useEffect, useState, useCallback } from 'react';
 import { purchaseOrderService } from '@/lib/services';
 import { getApiError } from '@/lib/api';
 import toast from 'react-hot-toast';
-import { ShoppingCart, ChevronLeft, ChevronRight, X } from 'lucide-react';
+import Link from 'next/link';
+import { ShoppingCart, ChevronLeft, ChevronRight, X, Plus } from 'lucide-react';
 
 const FMT = (n: any) => `₹${Number(n).toLocaleString('en-IN')}`;
 const DATE = (x: any) => x ? new Date(x).toLocaleDateString('en-IN') : '—';
@@ -58,6 +59,9 @@ export default function PurchaseOrdersPage() {
           <h1 className="page-title">Purchase Orders</h1>
           <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 3 }}>{total} purchase orders</p>
         </div>
+        <Link href="/suppliers/purchase-orders/new" className="btn-primary">
+          <Plus size={14} /> New Purchase Order
+        </Link>
       </div>
 
       <div className="card p-4 flex flex-wrap gap-3">

@@ -4,7 +4,8 @@ import { useEffect, useState, useCallback } from 'react';
 import { goodsReceiptService } from '@/lib/services';
 import { getApiError } from '@/lib/api';
 import toast from 'react-hot-toast';
-import { PackageCheck, ChevronLeft, ChevronRight } from 'lucide-react';
+import Link from 'next/link';
+import { PackageCheck, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 
 const DATE = (x: any) => x ? new Date(x).toLocaleDateString('en-IN') : '—';
 
@@ -43,6 +44,9 @@ export default function GoodsReceiptsPage() {
           <h1 className="page-title">Goods Receipts</h1>
           <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 3 }}>{total} goods receipts recorded</p>
         </div>
+        <Link href="/suppliers/receipts/new" className="btn-primary">
+          <Plus size={14} /> Receive Goods
+        </Link>
       </div>
 
       <div className="card">

@@ -21,10 +21,17 @@ export function PageHero({ eyebrow, title, subtitle }: { eyebrow?: string; title
 // Product card for grids
 export function ProductCard({ p }: { p: Product }) {
   const price = fmt(p.min_price);
+  const out = p.in_stock === false;
   return (
-    <Link href={`/products/${p.id}`} className="card" style={{ display: 'block', overflow: 'hidden', textDecoration: 'none', color: 'inherit' }}>
-      <div style={{ aspectRatio: '4/3', background: 'linear-gradient(135deg, var(--brand-50), #e7f6ed)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <Package size={46} color="var(--brand-600)" strokeWidth={1.4} />
+    <Link href={`/products/${p.id}`} className="card" style={{ display: 'block', overflow: 'hidden', textDecoration: 'none', color: 'inherit', position: 'relative' }}>
+      {/* badges */}
+      {p.badge && <span style={{ position: 'absolute', top: 10, left: 10, zIndex: 2, background: 'var(--brand)', color: '#fff', fontSize: 11, fontWeight: 800, padding: '3px 9px', borderRadius: 999, textTransform: 'uppercase', letterSpacing: '.03em' }}>{p.badge}</span>}
+      <span style={{ position: 'absolute', top: 10, right: 10, zIndex: 2, fontSize: 11, fontWeight: 700, padding: '3px 9px', borderRadius: 999, background: out ? '#fef2f2' : '#ecfdf5', color: out ? '#b91c1c' : '#047857', border: `1px solid ${out ? '#fecaca' : '#a7f3d0'}` }}>{out ? 'Out of stock' : 'In stock'}</span>
+      {/* image / placeholder */}
+      <div style={{ aspectRatio: '4/3', background: 'linear-gradient(135deg, var(--brand-50), #e7f6ed)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+        {p.image_url
+          ? <img src={p.image_url} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: out ? 0.65 : 1 }} />
+          : <Package size={46} color="var(--brand-600)" strokeWidth={1.4} />}
       </div>
       <div style={{ padding: 16 }}>
         {p.category && <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--brand-700)', textTransform: 'uppercase', letterSpacing: '.04em', marginBottom: 4 }}>{p.category}</div>}

@@ -17,10 +17,11 @@ export interface Category { id: number; name: string; product_count?: number; }
 export interface Product {
   id: number; name: string; unit?: string; hsn_code?: string;
   category?: string; min_price?: number; max_price?: number; variant_count?: number;
+  image_url?: string; badge?: string; in_stock?: boolean; stock?: number;
 }
 export interface ProductDetail extends Product {
-  gst_rate?: number;
-  variants?: { id: number; sku: string; dimension_label?: string; selling_price?: number }[];
+  gst_rate?: number; description?: string;
+  variants?: { id: number; sku: string; dimension_label?: string; color?: string; selling_price?: number; stock?: number; in_stock?: boolean }[];
 }
 
 export async function getCategories(): Promise<Category[]> {

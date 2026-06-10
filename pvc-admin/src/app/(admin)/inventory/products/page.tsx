@@ -17,6 +17,8 @@ interface Product {
   gst_rate: number;
   low_stock_threshold: number;
   is_active: number;
+  image_url?: string;
+  badge?: string;
   dimensions?: { sku: string; selling_price: number; current_qty?: number }[];
 }
 
@@ -34,7 +36,8 @@ export default function ProductsPage() {
   const [editing,     setEditing]     = useState<Product | null>(null);
   const [saving,      setSaving]      = useState(false);
   const [deleting,    setDeleting]    = useState<number | null>(null);
-  const [form,        setForm]        = useState({ name:'', category_id:'', unit:'piece', hsn_code:'', gst_rate:'0', low_stock_threshold:'10' });
+  const [form,        setForm]        = useState({ name:'', category_id:'', unit:'piece', hsn_code:'', gst_rate:'0', low_stock_threshold:'10', image_url:'', badge:'' });
+  const [toggling,    setToggling]    = useState<number | null>(null);
   const LIMIT = 20;
 
   const load = useCallback(async () => {
@@ -53,11 +56,21 @@ export default function ProductsPage() {
   }, []);
   useEffect(() => { setPage(1); }, [search, catFilter]);
 
-  const openAdd = () => { setEditing(null); setForm({ name:'',category_id:'',unit:'piece',hsn_code:'',gst_rate:'0',low_stock_threshold:'10' }); setShowModal(true); };
+  const openAdd = () => { setEditing(null); setForm({ name:'',category_id:'',unit:'piece',hsn_code:'',gst_rate:'0',low_stock_threshold:'10',image_url:'',badge:'' }); setShowModal(true); };
   const openEdit = (p: Product) => {
     setEditing(p);
-    setForm({ name:p.name, category_id:'', unit:p.unit, hsn_code:'', gst_rate:String(p.gst_rate), low_stock_threshold:String(p.low_stock_threshold) });
+    setForm({ name:p.name, category_id:'', unit:p.unit, hsn_code:'', gst_rate:String(p.gst_rate), low_stock_threshold:String(p.low_stock_threshold), image_url:p.image_url||'', badge:p.badge||'' });
     setShowModal(true);
+  };
+
+  const toggleActive = async (p: Product) => {
+    setToggling(p.id);
+    try {
+      await productService.update(p.id, { is_active: p.is_active ? 0 : 1 });
+      toast.success(p.is_active ? 'Product hidden from website' : 'Product published to website');
+      load();
+    } catch (e) { toast.error(getApiError(e)); }
+    finally { setToggling(null); }
   };
 
   const handleSave = async () => {
@@ -174,9 +187,12 @@ export default function ProductsPage() {
                     </span>
                   </td>
                   <td>
-                    <span className={`badge ${p.is_active ? 'badge-success' : 'badge-neutral'}`}>
-                      {p.is_active ? 'Active' : 'Inactive'}
-                    </span>
+                    <button onClick={() => toggleActive(p)} disabled={toggling === p.id}
+                      title={p.is_active ? 'Published on website — click to hide' : 'Hidden — click to publish'}
+                      className={`badge ${p.is_active ? 'badge-success' : 'badge-neutral'}`}
+                      style={{ cursor: 'pointer', border: 'none' }}>
+                      {toggling === p.id ? '…' : (p.is_active ? '● Published' : '○ Hidden')}
+                    </button>
                   </td>
                   <td>
                     <div className="flex items-center gap-1.5">
@@ -278,6 +294,15 @@ export default function ProductsPage() {
                 <label className="form-label">Low Stock Alert Threshold</label>
                 <input type="number" className="input" min="0" value={form.low_stock_threshold} onChange={e => setForm(f => ({ ...f, low_stock_threshold: e.target.value }))} />
                 <span className="form-hint">Alert when stock falls below this number</span>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Image URL <span style={{ color: 'var(--text-muted)' }}>(for website)</span></label>
+                <input className="input" placeholder="https://...jpg" value={form.image_url} onChange={e => setForm(f => ({ ...f, image_url: e.target.value }))} />
+                <span className="form-hint">Paste a hosted image link — shown on the public website &amp; shop.</span>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Badge / Tag <span style={{ color: 'var(--text-muted)' }}>(optional)</span></label>
+                <input className="input" placeholder="e.g. New, Sale, Bestseller" value={form.badge} onChange={e => setForm(f => ({ ...f, badge: e.target.value }))} />
               </div>
             </div>
             <div className="flex gap-3 mt-6">

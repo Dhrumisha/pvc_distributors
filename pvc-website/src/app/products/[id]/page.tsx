@@ -182,20 +182,26 @@ export default async function ProductDetailPage({
           >
             {/* ── Left column: product info ── */}
             <div>
-              {/* Product image placeholder */}
+              {/* Product image */}
               <div
                 style={{
-                  aspectRatio: '16/7',
+                  position: 'relative',
+                  aspectRatio: '16/9',
                   background: 'linear-gradient(135deg, var(--brand-50), #e7f6ed)',
                   borderRadius: 20,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  marginBottom: 32,
+                  marginBottom: 24,
                   border: '1px solid var(--brand-100)',
+                  overflow: 'hidden',
                 }}
               >
-                <Package size={72} color="var(--brand-600)" strokeWidth={1.2} />
+                {product.badge && <span style={{ position: 'absolute', top: 14, left: 14, background: 'var(--brand)', color: '#fff', fontSize: 12, fontWeight: 800, padding: '4px 11px', borderRadius: 999, textTransform: 'uppercase' }}>{product.badge}</span>}
+                <span style={{ position: 'absolute', top: 14, right: 14, fontSize: 12, fontWeight: 700, padding: '4px 11px', borderRadius: 999, background: product.in_stock === false ? '#fef2f2' : '#ecfdf5', color: product.in_stock === false ? '#b91c1c' : '#047857', border: `1px solid ${product.in_stock === false ? '#fecaca' : '#a7f3d0'}` }}>{product.in_stock === false ? 'Out of stock' : 'In stock'}</span>
+                {product.image_url
+                  ? <img src={product.image_url} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  : <Package size={72} color="var(--brand-600)" strokeWidth={1.2} />}
               </div>
 
               {/* Header */}
@@ -353,6 +359,9 @@ export default async function ProductDetailPage({
                           >
                             Price (₹)
                           </th>
+                          <th style={{ textAlign: 'right', padding: '11px 16px', fontWeight: 700, color: 'var(--brand-800)', fontSize: 12, letterSpacing: '.06em', textTransform: 'uppercase' }}>
+                            Availability
+                          </th>
                         </tr>
                       </thead>
                       <tbody>
@@ -368,10 +377,21 @@ export default async function ProductDetailPage({
                               {v.sku}
                             </td>
                             <td style={{ padding: '11px 16px', color: 'var(--muted)' }}>
-                              {v.dimension_label ?? '—'}
+                              <span>{v.dimension_label ?? '—'}</span>
+                              {v.color && (
+                                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, marginLeft: 8 }}>
+                                  <span style={{ width: 13, height: 13, borderRadius: '50%', background: v.color, border: '1px solid #d8dee6', display: 'inline-block' }} />
+                                  <span style={{ fontSize: 12, color: 'var(--ink)' }}>{v.color}</span>
+                                </span>
+                              )}
                             </td>
                             <td style={{ padding: '11px 16px', textAlign: 'right', fontWeight: 700, color: v.selling_price ? 'var(--brand-700)' : 'var(--muted)' }}>
                               {v.selling_price ? fmt(v.selling_price) : 'On request'}
+                            </td>
+                            <td style={{ padding: '11px 16px', textAlign: 'right' }}>
+                              <span style={{ fontSize: 12, fontWeight: 700, color: v.in_stock === false ? '#b91c1c' : '#047857' }}>
+                                {v.in_stock === false ? 'Out of stock' : 'In stock'}
+                              </span>
                             </td>
                           </tr>
                         ))}

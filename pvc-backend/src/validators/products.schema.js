@@ -10,6 +10,8 @@ module.exports = {
     low_stock_threshold:  Joi.number().min(0).default(10),
     description:          Joi.string().allow('',null),
     default_supplier_id:  Joi.number().integer().allow(null),
+    image_url:            Joi.string().max(500).allow('',null),
+    badge:                Joi.string().max(40).allow('',null),
   }),
   update: Joi.object({
     name:                Joi.string().trim().min(1).max(200),
@@ -18,6 +20,8 @@ module.exports = {
     description:         Joi.string().allow('',null),
     is_active:           Joi.number().valid(0,1),
     default_supplier_id: Joi.number().integer().allow(null),
+    image_url:           Joi.string().max(500).allow('',null),
+    badge:               Joi.string().max(40).allow('',null),
   }),
   dimension: Joi.object({
     sku:             Joi.string().trim().max(50).required(),
@@ -27,10 +31,12 @@ module.exports = {
     width_mm:        Joi.number().allow(null),
     height_mm:       Joi.number().allow(null),
     thickness_mm:    Joi.number().allow(null),
+    color:           Joi.string().max(60).allow('',null),
   }),
   dimensionUpdate: Joi.object({
     purchase_price: Joi.number().min(0),
     selling_price:  Joi.number().min(0),
     is_active:      Joi.number().valid(0,1),
+    color:          Joi.string().max(60).allow('',null),
   }),
 };

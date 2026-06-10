@@ -4,7 +4,8 @@ import { useEffect, useState, useCallback } from 'react';
 import { deliveryService } from '@/lib/services';
 import { getApiError } from '@/lib/api';
 import toast from 'react-hot-toast';
-import { Truck, ChevronLeft, ChevronRight, X } from 'lucide-react';
+import Link from 'next/link';
+import { Truck, ChevronLeft, ChevronRight, X, Plus } from 'lucide-react';
 
 const STATUS_BADGE: Record<string, string> = {
   scheduled:  'badge-warning',
@@ -47,6 +48,9 @@ export default function DeliveriesPage() {
           <h1 className="page-title">Deliveries</h1>
           <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 3 }}>{total} deliveries total</p>
         </div>
+        <Link href="/delivery/new" className="btn-primary">
+          <Plus size={14} /> New Delivery
+        </Link>
       </div>
 
       <div className="card p-4 flex flex-wrap gap-3">

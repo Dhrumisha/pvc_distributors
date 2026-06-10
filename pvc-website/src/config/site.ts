@@ -21,7 +21,7 @@ export const site = {
   hours: 'Mon–Sat: 9:30 AM – 7:00 PM',
   // URLs
   url: 'https://www.pvcdistributors.com',     // your public domain (for SEO/sitemap)
-  adminUrl: 'https://pvc-admin.vercel.app',   // staff login (admin panel)
+  adminUrl: 'https://pvcdist-admin.vercel.app',   // staff login (admin panel)
   // Social (leave '' to hide)
   social: {
     facebook: '',

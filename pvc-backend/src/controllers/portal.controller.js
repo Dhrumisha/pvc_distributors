@@ -29,6 +29,7 @@ function effectiveDiscount(customer, tmap) {
     typeLabel: t.label || customer.customer_type,
   };
 }
+const stockSub = () => db('stock_ledger').select('product_dimension_id').sum('qty_change as qty').groupBy('product_dimension_id');
 async function outstandingFor(customerId) {
   const [{ outstanding }] = await db('invoices')
     .where({ customer_id: customerId }).whereIn('status', ['issued', 'partially_paid', 'overdue'])
@@ -114,19 +115,22 @@ exports.products = async (req, res) => {
   const { search, category_id } = req.query;
   const tmap = await typeMap();
   const eff = effectiveDiscount(req.customer, tmap);
-  let q = db('products as p').leftJoin('categories as c', 'c.id', 'p.category_id').whereNull('p.deleted_at');
+  let q = db('products as p').leftJoin('categories as c', 'c.id', 'p.category_id').whereNull('p.deleted_at').where('p.is_active', 1);
   if (search) q = q.whereILike('p.name', `%${search}%`);
   if (category_id) q = q.where('p.category_id', category_id);
   const products = await q
     .leftJoin('product_dimensions as pd', 'pd.product_id', 'p.id')
-    .groupBy('p.id', 'p.name', 'p.unit', 'c.name')
-    .select('p.id', 'p.name', 'p.unit', db.raw('c.name as category'),
-            db.raw('MIN(pd.selling_price)::float as base_min'), db.raw('MAX(pd.selling_price)::float as base_max'))
+    .leftJoin(stockSub().as('sl'), 'sl.product_dimension_id', 'pd.id')
+    .groupBy('p.id', 'p.name', 'p.unit', 'p.image_url', 'p.badge', 'c.name')
+    .select('p.id', 'p.name', 'p.unit', 'p.image_url', 'p.badge', db.raw('c.name as category'),
+            db.raw('MIN(pd.selling_price)::float as base_min'), db.raw('MAX(pd.selling_price)::float as base_max'),
+            db.raw('COALESCE(SUM(sl.qty),0)::float as stock'))
     .orderBy('p.name');
   const factor = 1 - eff.percent / 100;
   const out = products.map(p => ({
     ...p,
     discount_percent: eff.percent,
+    in_stock: Number(p.stock) > 0,
     net_min: p.base_min != null ? Math.round(p.base_min * factor * 100) / 100 : null,
     net_max: p.base_max != null ? Math.round(p.base_max * factor * 100) / 100 : null,
   }));
@@ -138,12 +142,16 @@ exports.product = async (req, res) => {
   const tmap = await typeMap();
   const eff = effectiveDiscount(req.customer, tmap);
   const product = await db('products as p').leftJoin('categories as c', 'c.id', 'p.category_id')
-    .where('p.id', req.params.id).whereNull('p.deleted_at')
-    .select('p.id', 'p.name', 'p.unit', 'p.gst_rate', db.raw('c.name as category')).first();
+    .where('p.id', req.params.id).whereNull('p.deleted_at').where('p.is_active', 1)
+    .select('p.id', 'p.name', 'p.unit', 'p.gst_rate', 'p.image_url', 'p.badge', 'p.description', db.raw('c.name as category')).first();
   if (!product) return ok(res, { product: null });
   const factor = 1 - eff.percent / 100;
-  const variants = (await db('product_dimensions').where({ product_id: product.id }).select('id', 'sku', 'dimension_label', 'selling_price').orderBy('sku'))
-    .map(v => ({ ...v, base_price: Number(v.selling_price || 0), net_price: Math.round(Number(v.selling_price || 0) * factor * 100) / 100 }));
+  const variants = (await db('product_dimensions as pd')
+    .leftJoin(stockSub().as('sl'), 'sl.product_dimension_id', 'pd.id')
+    .where('pd.product_id', product.id)
+    .select('pd.id', 'pd.sku', 'pd.dimension_label', 'pd.color', 'pd.selling_price', db.raw('COALESCE(sl.qty,0)::float as stock'))
+    .orderBy('pd.sku'))
+    .map(v => ({ ...v, base_price: Number(v.selling_price || 0), net_price: Math.round(Number(v.selling_price || 0) * factor * 100) / 100, in_stock: Number(v.stock) > 0 }));
   return ok(res, { product: { ...product, discount_percent: eff.percent, variants } });
 };
 
@@ -158,15 +166,21 @@ exports.placeOrder = async (req, res) => {
   const eff = effectiveDiscount(c, tmap);
   const dimIds = items.map(i => i.product_dimension_id);
   const dims = await db('product_dimensions as pd').join('products as p', 'p.id', 'pd.product_id')
-    .whereIn('pd.id', dimIds).select('pd.id', 'pd.selling_price', 'p.gst_rate');
+    .whereIn('pd.id', dimIds).select('pd.id', 'pd.sku', 'pd.selling_price', 'p.gst_rate');
   const dmap = Object.fromEntries(dims.map(d => [d.id, d]));
+  // current stock per requested dimension
+  const stockRows = await db('stock_ledger').whereIn('product_dimension_id', dimIds).select('product_dimension_id').sum('qty_change as qty').groupBy('product_dimension_id');
+  const smap = Object.fromEntries(stockRows.map(s => [s.product_dimension_id, Number(s.qty)]));
 
+  const shortages = [];
   const rows = [];
   let subtotal = 0, tax = 0;
   for (const it of items) {
     const d = dmap[it.product_dimension_id];
     if (!d) continue;
     const qty = Math.max(1, Number(it.qty) || 1);
+    const avail = smap[d.id] || 0;
+    if (qty > avail) shortages.push(`${d.sku}: only ${avail} in stock (requested ${qty})`);
     const unit = Number(d.selling_price || 0);
     const gst = Number(d.gst_rate || 0);
     const lineNet = qty * unit * (1 - eff.percent / 100);
@@ -175,6 +189,7 @@ exports.placeOrder = async (req, res) => {
     rows.push({ product_dimension_id: d.id, ordered_qty: qty, dispatched_qty: 0, unit_price: unit, gst_rate: gst, discount_pct: eff.percent, line_total: Math.round(lineNet * 100) / 100 });
   }
   if (!rows.length) throw new AppError('No valid items in cart.', 400);
+  if (shortages.length) throw new AppError('Insufficient stock — ' + shortages.join('; ') + '.', 422);
   const total = Math.round((subtotal + tax) * 100) / 100;
 
   // Credit (Udhaar) check

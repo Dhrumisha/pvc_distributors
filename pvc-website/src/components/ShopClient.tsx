@@ -22,8 +22,11 @@ interface Variant {
   id: string;
   sku: string;
   dimension_label: string;
+  color?: string;
   base_price: number;
   net_price: number;
+  stock?: number;
+  in_stock?: boolean;
 }
 
 interface CartItem {
@@ -49,53 +52,61 @@ function VariantRow({
   onAdd: (item: Omit<CartItem, 'qty'>) => void;
 }) {
   const [qty, setQty] = useState(1);
+  const out = v.in_stock === false || (v.stock != null && v.stock <= 0);
+  const maxQty = v.stock != null && v.stock > 0 ? v.stock : Infinity;
 
   return (
     <div style={{
       display: 'grid', gridTemplateColumns: '1fr auto auto', gap: 10,
       alignItems: 'center', padding: '10px 0',
-      borderBottom: '1px solid #f1f5f9',
+      borderBottom: '1px solid #f1f5f9', opacity: out ? 0.6 : 1,
     }}>
       <div>
-        <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--ink)' }}>{v.dimension_label || v.sku}</div>
+        <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--ink)', display: 'flex', alignItems: 'center', gap: 7 }}>
+          {v.color && <span title={v.color} style={{ width: 14, height: 14, borderRadius: '50%', background: v.color, border: '1px solid #d8dee6', display: 'inline-block', flexShrink: 0 }} />}
+          {v.dimension_label || v.sku}{v.color ? ` · ${v.color}` : ''}
+        </div>
         {v.dimension_label && v.sku && (
           <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>{v.sku}</div>
         )}
-        <div style={{ marginTop: 4, display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ marginTop: 4, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
           <span style={{ fontWeight: 800, color: 'var(--ink)', fontSize: 15 }}>{fmt(v.net_price)}</span>
           {v.base_price > v.net_price && (
             <span style={{ fontSize: 12, color: 'var(--muted)', textDecoration: 'line-through' }}>{fmt(v.base_price)}</span>
           )}
+          <span style={{ fontSize: 11, fontWeight: 700, color: out ? '#b91c1c' : '#047857' }}>
+            {out ? 'Out of stock' : (v.stock != null && v.stock <= 10 ? `Only ${v.stock} left` : 'In stock')}
+          </span>
         </div>
       </div>
 
       {/* qty stepper */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 2, border: '1px solid #e2e8f0', borderRadius: 8, overflow: 'hidden' }}>
-        <button
+      <div style={{ display: 'flex', alignItems: 'center', gap: 2, border: '1px solid #e2e8f0', borderRadius: 8, overflow: 'hidden', opacity: out ? 0.5 : 1 }}>
+        <button disabled={out}
           onClick={() => setQty(q => Math.max(1, q - 1))}
-          style={{ padding: '6px 10px', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', display: 'flex', alignItems: 'center' }}
+          style={{ padding: '6px 10px', background: 'none', border: 'none', cursor: out ? 'not-allowed' : 'pointer', color: 'var(--muted)', display: 'flex', alignItems: 'center' }}
         >
           <Minus size={14} />
         </button>
         <span style={{ minWidth: 28, textAlign: 'center', fontWeight: 700, fontSize: 14 }}>{qty}</span>
-        <button
-          onClick={() => setQty(q => q + 1)}
-          style={{ padding: '6px 10px', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', display: 'flex', alignItems: 'center' }}
+        <button disabled={out}
+          onClick={() => setQty(q => Math.min(maxQty, q + 1))}
+          style={{ padding: '6px 10px', background: 'none', border: 'none', cursor: out ? 'not-allowed' : 'pointer', color: 'var(--muted)', display: 'flex', alignItems: 'center' }}
         >
           <Plus size={14} />
         </button>
       </div>
 
-      <button
+      <button disabled={out}
         onClick={() => onAdd({ product_dimension_id: v.id, productName, sku: v.sku, dimension_label: v.dimension_label, net_price: v.net_price })}
         style={{
           display: 'inline-flex', alignItems: 'center', gap: 6,
-          background: 'var(--brand)', color: '#fff',
-          border: '1px solid var(--brand)', borderRadius: 8,
-          padding: '8px 14px', fontSize: 13, fontWeight: 700, cursor: 'pointer',
+          background: out ? '#e5e7eb' : 'var(--brand)', color: out ? '#9ca3af' : '#fff',
+          border: `1px solid ${out ? '#e5e7eb' : 'var(--brand)'}`, borderRadius: 8,
+          padding: '8px 14px', fontSize: 13, fontWeight: 700, cursor: out ? 'not-allowed' : 'pointer',
         }}
       >
-        <Plus size={14} /> Add
+        <Plus size={14} /> {out ? 'N/A' : 'Add'}
       </button>
     </div>
   );
