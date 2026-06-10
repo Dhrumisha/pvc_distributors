@@ -1,6 +1,6 @@
 // src/validators/payments.schema.js
 const Joi = require('joi');
-const mode = Joi.string().valid('cash','neft','rtgs','cheque','upi','other');
+const mode = Joi.string().valid('cash','neft','rtgs','cheque','upi','card','bank_transfer','other');
 module.exports = {
   customerPayment: Joi.object({
     invoice_id:       Joi.number().integer().required(),

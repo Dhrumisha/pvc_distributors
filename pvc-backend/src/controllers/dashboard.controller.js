@@ -7,7 +7,7 @@ exports.summary = async (req, res) => {
 
   const [ordersToday] = await db('sales_orders').where('order_date', today).count('id as count');
   const [pendingDel]  = await db('deliveries').whereIn('status',['scheduled','packed','dispatched','in_transit']).count('id as count');
-  const [lowStock]    = await db.raw(`
+  const lowStock      = await db.raw(`
     SELECT COUNT(*) as count FROM product_dimensions pd
     JOIN products p ON p.id = pd.product_id
     LEFT JOIN (SELECT product_dimension_id, SUM(qty_change) as total FROM stock_ledger GROUP BY product_dimension_id) sl

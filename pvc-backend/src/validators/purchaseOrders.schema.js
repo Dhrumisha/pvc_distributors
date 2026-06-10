@@ -9,5 +9,6 @@ const base = Joi.object({
 module.exports = {
   create: base,
   update: base,
+  receive: base,   // goods-receipt payload validated in the controller
   base,
 };
